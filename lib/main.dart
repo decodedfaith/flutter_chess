@@ -111,7 +111,7 @@ class UserProfile extends StatelessWidget {
       children: [
         CircleAvatar(
       radius: 20, // Size of the profile icon
-      backgroundImage: AssetImage('assets/user_icon.png'), // Your user icon image
+      // backgroundImage: AssetImage('assets/user_icon.png'), // Your user icon image  //throwing errors due to abscence of specified .png file within the asset folder
     ),
     SizedBox(width: 8), // Space between the profile and name
     Text(
