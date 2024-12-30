@@ -149,12 +149,13 @@ enum PieceColor {
 
 abstract class ChessPiece {
   final PieceColor color;
+  Position position;
   final String type;
 
-  ChessPiece(this.color, this.type);
+  ChessPiece(this.color, this.type, this.position);
 
   // Abstract method to get SVG asset path
   String getSvgAssetPath();
 
-  // bool isValidMove(Position nwPosition, ChessBoard board);
+  bool isValidMove(Position toPosition, ChessBoard board);
 }
