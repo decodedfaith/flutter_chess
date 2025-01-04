@@ -67,5 +67,17 @@ class ChessBoard {
   bool isEmpty(Position position) {
     return board[position.row][position.col] == null;
   }
+
+  ChessPiece? getPieceAt(Position from) {}
+
+  Position? findKing(String playerColor) {}
+
+  bool isUnderAttack(Position kingPosition, String opponentColor) {}
+
+  getPiecesByColor(String playerColor) {}
+
+  ChessBoard simulateMove(position, move) {}
+
+  bool isKingInCheck(String playerColor) {}
 }
 
