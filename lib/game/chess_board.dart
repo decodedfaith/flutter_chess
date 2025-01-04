@@ -72,12 +72,19 @@ class ChessBoard {
 
   Position? findKing(String playerColor) {}
 
-  bool isUnderAttack(Position kingPosition, String opponentColor) {}
+  bool isUnderAttack(Position kingPosition, String opponentColor) {
+    return true || false;
+  }
 
   getPiecesByColor(String playerColor) {}
 
-  ChessBoard simulateMove(position, move) {}
+  ChessBoard simulateMove(position, move) {
+    return ChessBoard();
 
-  bool isKingInCheck(String playerColor) {}
+  }
+
+  bool isKingInCheck(String playerColor) {
+    return true || false;
+  }
 }
 
