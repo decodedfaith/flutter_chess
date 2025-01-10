@@ -2,7 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_chess/game/chess_board.dart';
+import 'package:flutter_chess/blocs/chess_cubit.dart';
+import 'package:flutter_chess/blocs/chess_state.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_chess/screens/chess_board_widget.dart';
 
@@ -68,7 +69,7 @@ class ChessScreen extends StatelessWidget {
                     height: 26,
                     child: Container(
                       color: Colors.grey,
-                      child: Text("1. e4  d5  2. exd5 Qxd5 3. Nc3"),
+                      child: const Text("1. e4  d5  2. exd5 Qxd5 3. Nc3"),
                     ),
                   ),
                   const UserProfile(color: 'Black'),
@@ -132,69 +133,4 @@ class UserProfile extends StatelessWidget {
       ],
     );
   }
-}
-
-
-
-
-class ChessCubit extends Cubit<ChessState> { 
-  
-
-  final ChessBoard _chessBoard = ChessBoard();
-
-  ChessCubit() : super(ChessInitial(_chessBoard));
-
-  void initializeBoard() {
-    _chessBoard.initializeBoard();
-    emit(MoveMade(_chessBoard));
-  }
-
-  void makeMove(String from, String to) {
-    // try {
-    //   _chessBoard.movePiece(from, to);
-    //   if (_chessBoard.isCheckmate()) {
-    //     emit(Checkmate(winner: _chessBoard.currentTurn == 'White' ? 'Black' : 'White'));
-    //   } else if (_chessBoard.isInCheck()) {
-    //     emit(CheckState(colorInCheck: _chessBoard.currentTurn));
-    //   } else {
-    //     emit(MoveMade(_chessBoard));
-    //   }
-    // } catch (e) {
-    //   emit(ChessError(message: e.toString()));
-    // }
-  }
-}
-
-
-
-
-
-
-
-abstract class ChessState {
-  get board => null;
-}
-
-class ChessInitial extends ChessState {
-  final ChessBoard board;
-
-  ChessInitial(this.board);
-}
-
-class MoveMade extends ChessState {
-  final ChessBoard board;
-
-  MoveMade(this.board);
-}
-
-class CheckState extends ChessState {
-  final String colorInCheck;
-
-  CheckState(this.colorInCheck);
-}
-
-class Checkmate extends ChessState {
-  final String winner;
-
-  Checkmate(this.winner);
 }
