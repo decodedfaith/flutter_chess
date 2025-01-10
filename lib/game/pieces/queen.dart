@@ -3,10 +3,16 @@
 import 'package:flutter_chess/game/chess_board.dart';
 import 'package:flutter_chess/game/chess_piece.dart';
 import 'package:flutter_chess/game/position.dart';
+import 'package:flutter_chess/models/player_color.dart';
 
 class Queen extends ChessPiece {
-  Queen(PieceColor color, Position position) : super(color, 'queen', position);
+  Queen(PlayerColor color, Position position) : super(color, 'queen', position);
   
+  @override
+  Queen copyWith({Position? position}) {
+    return Queen(color, position ?? this.position);
+  }
+
   @override
   String getSvgAssetPath() {
     return 'assets/chess_pieces_svg/${color.name}-queen.svg';
@@ -42,7 +48,35 @@ class Queen extends ChessPiece {
     return false;
   }
 
-  getValidMoves(){
-    return;
+  @override
+  List<Position> getValidMoves(ChessBoard board) {
+    List<Position> moves = [];
+
+    // Combine rook and bishop movement directions
+    List<List<int>> directions = [
+      [0, 1], [0, -1], [1, 0], [-1, 0], // Rook
+      [1, 1], [1, -1], [-1, 1], [-1, -1] // Bishop
+    ];
+
+    for (var direction in directions) {
+      int newRow = position.row;
+      int newCol = position.col;
+      while (true) {
+        newRow += direction[0];
+        newCol += direction[1];
+        Position next = Position(row: newRow, col: newCol);
+
+        if (newRow < 0 || newRow >= 8 || newCol < 0 || newCol >= 8) break;
+        if (board.isEmpty(next)) {
+          moves.add(next);
+        } else {
+          if (board.getPiece(next)?.color != color) moves.add(next);
+          break;
+        }
+      }
+    }
+
+    return moves.where((move) => board.isValidMove(position, move, this)).toList();
   }
+
 }
