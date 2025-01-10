@@ -1,97 +1,75 @@
 import 'package:flutter_chess/game/chess_board.dart';
 import 'package:flutter_chess/game/chess_piece.dart';
 import 'package:flutter_chess/game/position.dart';
+import 'package:flutter_chess/models/player_color.dart';
+
 
 class GameController {
   final ChessBoard chessBoard;
-  String currentPlayer = "White"; // White starts the game
+  PlayerColor currentPlayer = PlayerColor.white;
   bool isGameOver = false;
-  String? winner;
+  PlayerColor? winner;
 
   GameController({required this.chessBoard});
 
-  /// Switch the current player
   void switchPlayer() {
-    currentPlayer = currentPlayer == "White" ? "Black" : "White";
+    currentPlayer = currentPlayer == PlayerColor.white ? PlayerColor.black : PlayerColor.white;
   }
 
-  /// Validate and perform a move
   String makeMove(Position from, Position to) {
-    if (isGameOver) return "Game over! Winner: $winner";
+    if (isGameOver) return "Game over! Winner: ${winner?.name}";
 
-    ChessPiece? piece = chessBoard.getPieceAt(from);
-    if (piece == null) {
-      return "No piece at the selected position.";
-    }
+    ChessPiece? piece = chessBoard.getPiece(from);
+    if (piece == null) return "No piece at the selected position.";
+    if (piece.color != currentPlayer) return "It's ${currentPlayer.name}'s turn.";
 
-    if (piece.color != currentPlayer) {
-      return "It's $currentPlayer's turn.";
-    }
+    if (!piece.isValidMove(to, chessBoard)) return "Invalid move for ${piece.runtimeType}.";
 
-    if (!piece.isValidMove(to, chessBoard)) {
-      return "Invalid move for ${piece.type}.";
-    }
+    chessBoard.movePiece(from, to);
 
-    // Perform the move
-    chessBoard.movePiece(from as String, to as String);
-
-    // Check for special game states (check, checkmate, stalemate)
     if (isKingInCheck(currentPlayer)) {
       if (isCheckmate(currentPlayer)) {
         isGameOver = true;
-        winner = currentPlayer == "White" ? "Black" : "White";
-        return "Checkmate! $winner wins!";
-      } else {
-        return "Check!";
+        winner = currentPlayer == PlayerColor.white ? PlayerColor.black : PlayerColor.white;
+        return "Checkmate! ${winner?.name} wins!";
       }
+      return "Check!";
     } else if (isStalemate()) {
       isGameOver = true;
       return "Stalemate! It's a draw.";
     }
 
-    // Switch turn after a valid move
     switchPlayer();
     return "Move successful.";
   }
 
-  /// Check if the king of the given player is in check
-  bool isKingInCheck(String playerColor) {
-    Position? kingPosition = chessBoard.findKing(playerColor);
-    if (kingPosition == null) return false;
-
-    return chessBoard.isUnderAttack(kingPosition, opponentColor(playerColor));
+  bool isKingInCheck(PlayerColor color) {
+    Position? kingPosition = chessBoard.findKing(color);
+    return kingPosition != null && chessBoard.isUnderAttack(kingPosition, opponentColor(color));
   }
 
-  /// Check if the given player is in checkmate
-  bool isCheckmate(String playerColor) {
-    if (!isKingInCheck(playerColor)) return false;
+  bool isCheckmate(PlayerColor color) {
+    if (!isKingInCheck(color)) return false;
 
-    // Iterate through all pieces of the player
-    for (var piece in chessBoard.getPiecesByColor(playerColor)) {
+    for (var piece in chessBoard.getPiecesByColor(color)) {
       for (var move in piece.getValidMoves(chessBoard)) {
-        ChessBoard simulatedBoard = chessBoard.simulateMove(piece.position, move);
-        if (!simulatedBoard.isKingInCheck(playerColor)) {
-          return false; // If there's a valid move to escape check, not a checkmate
-        }
+        var simulatedBoard = chessBoard.simulateMove(piece.position, move);
+        if (!simulatedBoard.isKingInCheck(color)) return false;
       }
     }
     return true;
   }
 
-  /// Check if the game is in a stalemate
   bool isStalemate() {
-    for (var color in ["White", "Black"]) {
+    for (var color in PlayerColor.values) {
       for (var piece in chessBoard.getPiecesByColor(color)) {
-        if (piece.getValidMoves(chessBoard).isNotEmpty) {
-          return false; // At least one valid move exists, not stalemate
-        }
+        if (piece.getValidMoves(chessBoard).isNotEmpty) return false;
       }
     }
     return true;
   }
 
-  /// Get the opponent's color
-  String opponentColor(String color) {
-    return color == "White" ? "Black" : "White";
+  PlayerColor opponentColor(PlayerColor color) {
+    return color == PlayerColor.white ? PlayerColor.black : PlayerColor.white;
   }
 }
