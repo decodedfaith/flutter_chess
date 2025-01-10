@@ -10,7 +10,7 @@ class Position {
   String get colLetter => String.fromCharCode(col + 97);
 
   // Convert the position to the standard chess notation (e.g., 0, 0 -> 'a1')
-  String get notation => '${colLetter}${8 - row}';
+  String get notation => '$colLetter${8 - row}';
 
   @override
   bool operator ==(Object other) =>
