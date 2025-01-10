@@ -3,9 +3,15 @@
 import 'package:flutter_chess/game/chess_board.dart';
 import 'package:flutter_chess/game/chess_piece.dart';
 import 'package:flutter_chess/game/position.dart';
+import 'package:flutter_chess/models/player_color.dart';
 
 class Knight extends ChessPiece {
-  Knight(PieceColor color, Position position) : super(color, 'knight', position);
+  Knight(PlayerColor color, Position position) : super(color, 'knight', position);
+
+  @override
+  Knight copyWith({Position? position}) {
+    return Knight(color, position ?? this.position);
+  }
 
   @override
   String getSvgAssetPath() {
@@ -27,7 +33,27 @@ class Knight extends ChessPiece {
     return false;
   }
 
-  getValidMoves(){
-    return;
-  } 
+  @override
+  List<Position> getValidMoves(ChessBoard board) {
+    List<Position> moves = [];
+    List<List<int>> offsets = [
+      [2, 1], [2, -1], [-2, 1], [-2, -1],
+      [1, 2], [1, -2], [-1, 2], [-1, -2]
+    ];
+
+    for (var offset in offsets) {
+      int newRow = position.row + offset[0];
+      int newCol = position.col + offset[1];
+      Position move = Position(row: newRow, col: newCol);
+
+      if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
+        if (board.isEmpty(move) || board.getPiece(move)?.color != color) {
+          moves.add(move);
+        }
+      }
+    }
+
+    return moves.where((move) => board.isValidMove(position, move, this)).toList();
+  }
+
 }
