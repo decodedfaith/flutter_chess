@@ -49,32 +49,32 @@ class ChessBoard {
   }
 
   void movePiece(Position from, Position to) {
-  try {
-    // Retrieve the piece at the 'from' position
-    ChessPiece? piece = board[from.row][from.col];
-    
-    if (piece == null || piece.color != currentTurn) {
-      throw Exception('Invalid move: no piece at source or wrong turn');
-    }
+    try {
+      // Retrieve the piece at the 'from' position
+      ChessPiece? piece = board[from.row][from.col];
+      
+      if (piece == null || piece.color != currentTurn) {
+        throw Exception('Invalid move: no piece at source or wrong turn');
+      }
 
-    // Validate the move
-    if (piece.isValidMove(to, this)) {
-      // Perform the move
-      board[to.row][to.col] = piece;
-      board[from.row][from.col] = null;
-      
-      // Update the piece's position
-      piece.position = to;
-      
-      // Switch turns
-      currentTurn = currentTurn == PlayerColor.white ? PlayerColor.black : PlayerColor.white;
-    } else {
-      throw Exception('Invalid move for ${piece.runtimeType}');
+      // Validate the move
+      if (piece.isValidMove(to, this)) {
+        // Perform the move
+        board[to.row][to.col] = piece;
+        board[from.row][from.col] = null;
+        
+        // Update the piece's position
+        piece.position = to;
+        
+        // Switch turns
+        currentTurn = currentTurn == PlayerColor.white ? PlayerColor.black : PlayerColor.white;
+      } else {
+        throw Exception('Invalid move for ${piece.runtimeType}');
+      }
+    } catch (e) {
+      throw Exception('Error moving piece: ${e.toString()}');
     }
-  } catch (e) {
-    throw Exception('Error moving piece: ${e.toString()}');
   }
-}
 
 
   bool isCheckmate() {

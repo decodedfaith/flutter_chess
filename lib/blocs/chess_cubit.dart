@@ -1,11 +1,15 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chess/blocs/chess_state.dart';
 import 'package:flutter_chess/game/chess_board.dart';
+import 'package:flutter_chess/game/chess_piece.dart';
 import 'package:flutter_chess/game/position.dart';
 import 'package:flutter_chess/models/player_color.dart';
 
 class ChessCubit extends Cubit<ChessState> {
   final ChessBoard _chessBoard = ChessBoard();
+  ChessPiece? selectedPiece;
+  Position? selectedPosition;
+
 
   ChessCubit() : super(ChessInitial(ChessBoard())) {
     initializeBoard(); // Initialize board on creation
@@ -47,6 +51,19 @@ class ChessCubit extends Cubit<ChessState> {
       emit(ChessError(e.toString(), _chessBoard));
     }
   }
+
+  void selectPiece(Position position) {
+    // Logic to select the piece and highlight valid moves
+    ChessPiece? piece = _chessBoard.getPiece(position);
+    if (piece != null) {
+      selectedPiece = piece;
+      selectedPosition = position;
+
+      // Emit state with the updated board and piece selection
+      emit(MoveMade(_chessBoard.currentTurn, _chessBoard));
+    }
+  }
+
 
 
   void resetGame() {
