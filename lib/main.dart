@@ -39,7 +39,7 @@ class ChessScreen extends StatelessWidget {
       ),
       body: BlocBuilder<ChessCubit, ChessState>(
         builder: (context, state) {
-          return _buildStateBody(state);
+          return _buildStateBody(context, state);
         },
       ),
     );
@@ -68,9 +68,9 @@ class ChessScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStateBody(ChessState state) {
+  Widget _buildStateBody(BuildContext context, ChessState state) {
     if (state is ChessInitial || state is MoveMade) {
-      return _buildGameBoard(state);
+      return _buildGameBoard(context, state);
     } else if (state is CheckState) {
       return Center(child: Text('${state.colorInCheck} is in check!'));
     } else if (state is Checkmate) {
@@ -80,7 +80,9 @@ class ChessScreen extends StatelessWidget {
     }
   }
 
-  Widget _buildGameBoard(ChessState state) {
+  Widget _buildGameBoard(BuildContext context, ChessState state) {
+    final chessCubit = BlocProvider.of<ChessCubit>(context); // Access chessCubit
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -89,7 +91,7 @@ class ChessScreen extends StatelessWidget {
           SizedBox(height: 26, child: _buildMoveHistory()),
           const UserProfile(color: 'Black'),
           const SizedBox(height: 40),
-          ChessBoardWidget(chessBoard: state.board),
+          ChessBoardWidget(chessBoard: state.board, chessCubit: chessCubit), // Pass chessCubit
           const SizedBox(height: 40),
           const UserProfile(color: 'White'),
           const Text(
@@ -111,6 +113,7 @@ class ChessScreen extends StatelessWidget {
     );
   }
 }
+
 
 class UserProfile extends StatelessWidget {
   const UserProfile({super.key, required this.color});
