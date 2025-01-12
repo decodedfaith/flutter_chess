@@ -1,5 +1,5 @@
-// test/chess_game_test.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_chess/blocs/chess_cubit.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_chess/game/chess_board.dart';
 import 'package:flutter_chess/screens/chess_board_widget.dart';
@@ -8,12 +8,17 @@ void main() {
   group('Chess Game UI Tests', () {
     testWidgets('ChessBoardWidget renders correctly', (WidgetTester tester) async {
       final chessBoard = ChessBoard();
+      final chessCubit = ChessCubit(); // Initialize chessCubit here
+      
       chessBoard.initializeBoard();
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: ChessBoardWidget(chessBoard: chessBoard),
+            body: ChessBoardWidget(
+              chessBoard: chessBoard,
+              chessCubit: chessCubit, // Pass the initialized chessCubit
+            ),
           ),
         ),
       );
