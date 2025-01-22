@@ -1,6 +1,6 @@
 # Chess Game App 🕹️
 
-Welcome to the Chess Game app, a portfolio project built with **Flutter** and **Flame Game Engine**! This project is currently in development, showcasing skills in mobile game development, animation, and game logic implementation.
+Welcome to the Chess Game app, a project built with **Flutter** and **Flame Game Engine**! This project is currently in development, showcasing skills in mobile game development, animation, and game logic implementation.
 
 ---
 
