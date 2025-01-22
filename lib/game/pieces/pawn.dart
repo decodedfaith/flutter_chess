@@ -27,13 +27,13 @@ class Pawn extends ChessPiece {
     }
     
     // Moving forward two squares (only on the first move)
-if (position.row == startRow &&
-    toPosition.row == position.row + 2 * direction &&
-    toPosition.col == position.col &&
-    board.isEmpty(toPosition) &&
-    board.isEmpty(Position(row: position.row + direction, col: position.col))) {
-  return true;
-}
+    if (position.row == startRow &&
+        toPosition.row == position.row + 2 * direction &&
+        toPosition.col == position.col &&
+        board.isEmpty(toPosition) &&
+        board.isEmpty(Position(row: position.row + direction, col: position.col))) {
+      return true;
+    }
 
     // Capturing diagonally
     if (toPosition.row == position.row + direction &&
