@@ -21,8 +21,17 @@ class ChessCubit extends Cubit<ChessState> {
   }
 
   void makeMove(Position from, Position to) {
+    print("Hello world");
+      print("from ${from.row}");
+      print("from ${from.col}");
+      print("to ${to.row}");
+      print("to ${to.col}");
     try {
       _chessBoard.movePiece(from, to); // Make the move
+
+      print("Hello world");
+      print(from);
+      print(to);
 
       if (_chessBoard.isCheckmate()) {
         // Emit Checkmate state with winner
@@ -48,6 +57,7 @@ class ChessCubit extends Cubit<ChessState> {
       }
     } catch (e) {
       // Emit ChessError state in case of exceptions
+      print(e);
       emit(ChessError(e.toString(), _chessBoard));
     }
   }
