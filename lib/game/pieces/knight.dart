@@ -20,7 +20,7 @@ class Knight extends ChessPiece {
 
   @override
   bool isValidMove(Position toPosition, ChessBoard board) {
-    int dx = (toPosition.col - position.col).abs();
+    int dx = (chessColToIndex(toPosition.col) - chessColToIndex(position.col)).abs();
     int dy = (toPosition.row - position.row).abs();
 
     // Knight moves in an "L" shape (2 squares in one direction, 1 in the other)
@@ -43,8 +43,8 @@ class Knight extends ChessPiece {
 
     for (var offset in offsets) {
       int newRow = position.row + offset[0];
-      int newCol = position.col + offset[1];
-      Position move = Position(row: newRow, col: newCol);
+      int newCol = chessColToIndex(position.col) + offset[1];
+      Position move = Position(row: newRow, col: indexToChessCol(newCol));
 
       if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
         if (board.isEmpty(move) || board.getPiece(move)?.color != color) {
@@ -54,6 +54,16 @@ class Knight extends ChessPiece {
     }
 
     return moves.where((move) => board.isValidMove(position, move, this)).toList();
+  }
+
+  int chessColToIndex(String col) {
+    // Convert chess column ('a'-'h') to array index (0-7)
+    return col.codeUnitAt(0) - 'a'.codeUnitAt(0);
+  }
+
+  String indexToChessCol(int colIndex) {
+    // Convert array index (0-7) to chess column ('a'-'h')
+    return String.fromCharCode('a'.codeUnitAt(0) + colIndex);
   }
 
 }
