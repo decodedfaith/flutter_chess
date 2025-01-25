@@ -35,9 +35,9 @@ class ChessBoardWidget extends StatelessWidget {
                   return GestureDetector(
                     onTap: (){
                       if (chessCubit.selectedPiece == null) {
-                      chessCubit.selectPiece(Position(col: col, row: row));
+                      chessCubit.selectPiece(Position(col: indexToChessCol(col), row: row));
                       } else {
-                        chessCubit.makeMove(Position(col: col, row: row), chessCubit.selectedPosition!);
+                        chessCubit.makeMove(Position(col: indexToChessCol(col), row: row), chessCubit.selectedPosition!);
                       }
                     },
                     child: Container(
@@ -112,5 +112,15 @@ class ChessBoardWidget extends StatelessWidget {
         );
       }
     );
+  }
+
+  int chessColToIndex(String col) {
+    // Convert chess column ('a'-'h') to array index (0-7)
+    return col.codeUnitAt(0) - 'a'.codeUnitAt(0);
+  }
+
+  String indexToChessCol(int colIndex) {
+    // Convert array index (0-7) to chess column ('a'-'h')
+    return String.fromCharCode('a'.codeUnitAt(0) + colIndex);
   }
 }
