@@ -20,20 +20,22 @@ class Queen extends ChessPiece {
 
   @override
   bool isValidMove(Position toPosition, ChessBoard board) {
-    int dx = (toPosition.col - position.col).abs();
+    int toColInt = chessColToIndex(toPosition.col);
+    int colInt = chessColToIndex(position.col);
+    int dx = (toColInt - colInt).abs();
     int dy = (toPosition.row - position.row).abs();
 
     // Queen moves like both a Rook (horizontal/vertical) and Bishop (diagonal)
     if (dx == dy || toPosition.row == position.row || toPosition.col == position.col) {
       // Check if the path is clear (no pieces blocking)
-      int stepX = (toPosition.col - position.col) > 0 ? 1 : (toPosition.col < position.col ? -1 : 0);
+      int stepX = (toColInt - colInt) > 0 ? 1 : (toColInt < colInt ? -1 : 0);
       int stepY = (toPosition.row - position.row) > 0 ? 1 : (toPosition.row < position.row ? -1 : 0);
 
-      int x = position.col + stepX;
+      int x = colInt + stepX;
       int y = position.row + stepY;
 
       while (x != toPosition.col || y != toPosition.row) {
-        if (!board.isEmpty(Position(row: y, col: x))) {
+        if (!board.isEmpty(Position(row: y, col: indexToChessCol(x)))) {
           return false; // There's a piece blocking the path
         }
         x += stepX;
@@ -60,11 +62,11 @@ class Queen extends ChessPiece {
 
     for (var direction in directions) {
       int newRow = position.row;
-      int newCol = position.col;
+      int newCol = chessColToIndex(position.col);
       while (true) {
         newRow += direction[0];
         newCol += direction[1];
-        Position next = Position(row: newRow, col: newCol);
+        Position next = Position(row: newRow, col: indexToChessCol(newCol));
 
         if (newRow < 0 || newRow >= 8 || newCol < 0 || newCol >= 8) break;
         if (board.isEmpty(next)) {
@@ -77,6 +79,16 @@ class Queen extends ChessPiece {
     }
 
     return moves.where((move) => board.isValidMove(position, move, this)).toList();
+  }
+
+   int chessColToIndex(String col) {
+    // Convert chess column ('a'-'h') to array index (0-7)
+    return col.codeUnitAt(0) - 'a'.codeUnitAt(0);
+  }
+
+  String indexToChessCol(int colIndex) {
+    // Convert array index (0-7) to chess column ('a'-'h')
+    return String.fromCharCode('a'.codeUnitAt(0) + colIndex);
   }
 
 }
