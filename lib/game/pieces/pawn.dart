@@ -37,7 +37,7 @@ class Pawn extends ChessPiece {
 
     // Capturing diagonally
     if (toPosition.row == position.row + direction &&
-        (toPosition.col == position.col + 1 || toPosition.col == position.col - 1) &&
+        (chessColToIndex(toPosition.col) == chessColToIndex(position.col) + 1 || chessColToIndex(toPosition.col) == chessColToIndex(position.col) - 1) &&
         !board.isEmpty(toPosition) &&
         board.getPiece(toPosition)!.color != color) {
       return true;
@@ -66,7 +66,8 @@ class Pawn extends ChessPiece {
 
     // Diagonal captures
     for (int offset in [-1, 1]) {
-      Position diagonal = Position(row: position.row + direction, col: position.col + offset);
+      int colInt = chessColToIndex(position.col) + offset; 
+      Position diagonal = Position(row: position.row + direction, col: indexToChessCol(colInt));
       if (!board.isEmpty(diagonal) && 
           board.getPiece(diagonal)?.color != color) {
         moves.add(diagonal);
@@ -74,6 +75,16 @@ class Pawn extends ChessPiece {
     }
 
     return moves.where((move) => board.isValidMove(position, move, this)).toList();
+  }
+
+   int chessColToIndex(String col) {
+    // Convert chess column ('a'-'h') to array index (0-7)
+    return col.codeUnitAt(0) - 'a'.codeUnitAt(0);
+  }
+
+  String indexToChessCol(int colIndex) {
+    // Convert array index (0-7) to chess column ('a'-'h')
+    return String.fromCharCode('a'.codeUnitAt(0) + colIndex);
   }
 
 }
