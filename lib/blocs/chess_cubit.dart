@@ -21,11 +21,6 @@ class ChessCubit extends Cubit<ChessState> {
   }
 
   void makeMove(Position from, Position to) {
-    print("Hello world");
-      print("from ${from.row}");
-      print("from ${from.col}");
-      print("to ${to.row}");
-      print("to ${to.col}");
     try {
       _chessBoard.movePiece(from, to); // Make the move
 
