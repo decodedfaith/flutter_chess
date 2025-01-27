@@ -10,7 +10,12 @@ class ChessBoardWidget extends StatelessWidget {
   final ChessBoard chessBoard;
   final ChessCubit chessCubit;
 
-  const ChessBoardWidget({super.key, required this.chessBoard, required this.chessCubit});
+   // Chess columns and rows
+  final List<int> rowPositions = [1, 2, 3, 4, 5, 6, 7, 8];
+  final List<String> columnPositions = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+
+
+  ChessBoardWidget({super.key, required this.chessBoard, required this.chessCubit});
 
   @override
   Widget build(BuildContext context) {
@@ -28,9 +33,10 @@ class ChessBoardWidget extends StatelessWidget {
                 ),
                 itemCount: 64,
                 itemBuilder: (context, index) {
-                  final row = index ~/ 8;
-                  final col = index % 8;
-                  final piece = chessBoard.board[row][col];
+                  final row = index ~/ 8; // Calculate row (0-7)
+                  final col = index % 8; // Calculate column (0-7)
+                  final colLetter = columnPositions[col]; // Convert column index to letter ('a' to 'h')
+                  final piece = chessBoard.board[colLetter]?[rowPositions[row]];
         
                   return GestureDetector(
                     onTap: (){
