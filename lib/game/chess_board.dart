@@ -9,49 +9,61 @@ import 'package:flutter_chess/game/position.dart';
 import 'package:flutter_chess/models/player_color.dart';
 
 class ChessBoard {
-  List<List<ChessPiece?>> board;
-
-  List<int> rowPositions = [1,2,3,4,5,6,7,8];
-  List<String> columnPositions = ['a','b','c','d','e','f','g','h'];
+  late Map<String, Map<int, ChessPiece?>> board;
   late PlayerColor currentTurn;
 
-  ChessBoard() : board = List.generate(8, (index) => List.generate(8, (_) => null));
+  // Chess columns and rows
+  final List<int> rowPositions = [1, 2, 3, 4, 5, 6, 7, 8];
+  final List<String> columnPositions = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+
+  ChessBoard() {
+    // Initialize the board as a map of maps
+    board = Map.fromEntries(
+      columnPositions.map(
+        (col) => MapEntry(
+          col,
+          Map.fromEntries(rowPositions.map((row) => MapEntry(row, null))),
+        ),
+      ),
+    );
+  }
 
   void initializeBoard() {
     currentTurn = PlayerColor.white; // Set currentTurn during board initialization
-    // Initialize Black Pieces (row 7 and 6)
-    board[7][0] = Rook(PlayerColor.black, Position(col: 'a', row: 8)); // a8
-    board[7][1] = Knight(PlayerColor.black, Position(col: 'b', row: 8,)); // b8
-    board[7][2] = Bishop(PlayerColor.black, Position(col: 'c', row: 8)); // c8
-    board[7][3] = Queen(PlayerColor.black, Position(col: 'd', row: 8));  // d8
-    board[7][4] = King(PlayerColor.black, Position(col: 'e', row: 8));   // e8
-    board[7][5] = Bishop(PlayerColor.black, Position(col: 'f', row: 8)); // f8
-    board[7][6] = Knight(PlayerColor.black, Position(col: 'g', row: 8)); // g8
-    board[7][7] = Rook(PlayerColor.black, Position(col: 'h', row: 8));   // h8
+
+    // Initialize Black Pieces (row 8 and 7)
+    board['a']![8] = Rook(PlayerColor.black, Position(col: 'a', row: 8)); // a8
+    board['b']![8] = Knight(PlayerColor.black, Position(col: 'b', row: 8)); // b8
+    board['c']![8] = Bishop(PlayerColor.black, Position(col: 'c', row: 8)); // c8
+    board['d']![8] = Queen(PlayerColor.black, Position(col: 'd', row: 8)); // d8
+    board['e']![8] = King(PlayerColor.black, Position(col: 'e', row: 8));   // e8
+    board['f']![8] = Bishop(PlayerColor.black, Position(col: 'f', row: 8)); // f8
+    board['g']![8] = Knight(PlayerColor.black, Position(col: 'g', row: 8)); // g8
+    board['h']![8] = Rook(PlayerColor.black, Position(col: 'h', row: 8));   // h8
 
     for (int i = 0; i < 8; i++) {
-      board[6][i] = Pawn(PlayerColor.black, Position(col: columnPositions[i], row: 7)); // a7, b7, ..., h7
+      board[columnPositions[i]]![7] = Pawn(PlayerColor.black, Position(col: columnPositions[i], row: 7)); // a7, b7, ..., h7
     }
 
     // Initialize White Pieces (row 1 and 2)
-    board[0][0] = Rook(PlayerColor.white, Position(col: 'a', row: 1)); // a1
-    board[0][1] = Knight(PlayerColor.white, Position(col: 'b', row: 1)); // b1
-    board[0][2] = Bishop(PlayerColor.white, Position(col: 'c', row: 1)); // c1
-    board[0][3] = Queen(PlayerColor.white, Position(col: 'd', row: 1));  // d1
-    board[0][4] = King(PlayerColor.white, Position(col: 'e', row: 1));   // e1
-    board[0][5] = Bishop(PlayerColor.white, Position(col: 'f', row: 1)); // f1
-    board[0][6] = Knight(PlayerColor.white, Position(col: 'g', row: 1)); // g1
-    board[0][7] = Rook(PlayerColor.white, Position(col: 'h', row: 1));   // h1
+    board['a']![1] = Rook(PlayerColor.white, Position(col: 'a', row: 1)); // a1
+    board['b']![1] = Knight(PlayerColor.white, Position(col: 'b', row: 1)); // b1
+    board['c']![1] = Bishop(PlayerColor.white, Position(col: 'c', row: 1)); // c1
+    board['d']![1] = Queen(PlayerColor.white, Position(col: 'd', row: 1));  // d1
+    board['e']![1] = King(PlayerColor.white, Position(col: 'e', row: 1));   // e1
+    board['f']![1] = Bishop(PlayerColor.white, Position(col: 'f', row: 1)); // f1
+    board['g']![1] = Knight(PlayerColor.white, Position(col: 'g', row: 1)); // g1
+    board['h']![1] = Rook(PlayerColor.white, Position(col: 'h', row: 1));   // h1
 
     for (int i = 0; i < 8; i++) {
-      board[1][i] = Pawn(PlayerColor.white, Position(col: columnPositions[i], row: 2)); // a2, b2, ..., h2
+      board[columnPositions[i]]![2] = Pawn(PlayerColor.white, Position(col: columnPositions[i], row: 2)); // a2, b2, ..., h2
     }
   }
 
   void movePiece(Position from, Position to) {
     try {
       // Retrieve the piece at the 'from' position
-      ChessPiece? piece = board[from.row][chessColToIndex(from.col)];
+      ChessPiece? piece = board[from.col]![from.row];
       
       if (piece == null || piece.color != currentTurn) {
         throw Exception('Invalid move: no piece at source or wrong turn');
@@ -60,8 +72,8 @@ class ChessBoard {
       // Validate the move
       if (piece.isValidMove(to, this)) {
         // Perform the move
-        board[to.row][chessColToIndex(to.col)] = piece;
-        board[from.row][chessColToIndex(from.col)] = null;
+        board[to.col]![to.row] = piece;
+        board[from.col]![from.row] = null;
         
         // Update the piece's position
         piece.position = to;
@@ -96,67 +108,89 @@ class ChessBoard {
   }
 
   Position? findKing(PlayerColor playerColor) {
-    for (int row = 0; row < 8; row++) {
-      for (int col = 0; col < 8; col++) {
-        ChessPiece? piece = board[row][col];
+    // Iterate through all columns (a-h) and rows (1-8)
+    for (String col in columnPositions) {
+      for (int row in rowPositions) {
+        ChessPiece? piece = board[col]![row]; // Access the piece at the current position
         if (piece is King && piece.color == playerColor) {
-          return piece.position;
+          return piece.position; // Return the position of the King
         }
       }
     }
-    return null;
+    return null; // Return null if no King is found
   }
 
   bool isUnderAttack(Position position, PlayerColor opponentColor) {
-    for (int row = 0; row < 8; row++) {
-      for (int col = 0; col < 8; col++) {
-        ChessPiece? piece = board[row][col];
-        if (piece != null && piece.color == opponentColor && piece.isValidMove(position, this)) {
-          return true;
+    // Iterate through all columns (a-h) and rows (1-8)
+    for (String col in columnPositions) {
+      for (int row in rowPositions) {
+        ChessPiece? piece = board[col]![row]; // Access the piece at the current position
+        if (piece != null && piece.color == opponentColor) {
+          // Check if the piece can attack the given position
+          if (piece.isValidMove(position, this)) {
+            return true;
+          }
         }
       }
     }
-    return false;
+    return false; // Return false if no piece can attack the position
   }
+
 
   bool noValidMoves(PlayerColor playerColor) {
     // Iterate through all pieces of the current player and check for valid moves
-    for (int row = 0; row < 8; row++) {
-      for (int col = 0; col < 8; col++) {
-        ChessPiece? piece = board[row][col];
+    for (var col in columnPositions) { // Iterate over columns ('a' to 'h')
+      for (var row in rowPositions) { // Iterate over rows (1 to 8)
+        ChessPiece? piece = board[col]?[row];
+        
         if (piece != null && piece.color == playerColor) {
-          for (int targetRow = 0; targetRow < 8; targetRow++) {
-            for (int targetCol = 0; targetCol < 8; targetCol++) {
-              if (piece.isValidMove(Position(row: targetRow, col: indexToChessCol(targetCol)), this)) {
-                return false;
+          // Check all possible target positions
+          for (var targetCol in columnPositions) {
+            for (var targetRow in rowPositions) {
+              Position to = Position(col: targetCol, row: targetRow);
+
+              // Check if the piece has a valid move to the target position
+              if (piece.isValidMove(to, this)) {
+                return false; // A valid move exists
               }
             }
           }
         }
       }
     }
+
+    // If no valid moves are found, return true
     return true;
   }
 
+
   ChessPiece? getPiece(Position position) {
-    return board[position.row][chessColToIndex(position.col)];
+    // Safely access the piece at the given position
+    return board[position.col]?[position.row];
   }
 
   bool isEmpty(Position position) {
-    return board[position.row][chessColToIndex(position.col)] == null;
+    // Check if the position is null (i.e., empty)
+    return board[position.col]?[position.row] == null;
   }
 
-   List<ChessPiece> getPiecesByColor(PlayerColor color) {
+  List<ChessPiece> getPiecesByColor(PlayerColor color) {
     List<ChessPiece> pieces = [];
-    for (var row in board) {
-      for (var piece in row) {
+    
+    // Iterate through all columns (a-h)
+    for (String col in columnPositions) {
+      // Iterate through all rows (1-8)
+      for (int row in rowPositions) {
+        ChessPiece? piece = board[col]?[row];
         if (piece != null && piece.color == color) {
-          pieces.add(piece);
+          pieces.add(piece); // Add the piece to the list if it matches the color
         }
       }
     }
+    
     return pieces;
   }
+
 
   bool isValidMove(Position from, Position to, ChessPiece piece) {
     // Ensure move is within bounds
@@ -180,24 +214,34 @@ class ChessBoard {
 
 
   ChessBoard simulateMove(Position from, Position to) {
+    // Create a new ChessBoard instance to simulate the move
     ChessBoard simulatedBoard = ChessBoard();
-    simulatedBoard.board = List.generate(
-      8,
-      (row) => List.generate(
-        8,
-        (col) => board[row][col]?.copyWith(position: Position(row: row, col: indexToChessCol(col))),
-      ),
-    );
 
+    // Copy the current board state into the simulated board
+    simulatedBoard.board = {
+      for (var col in columnPositions)
+        col: {
+          for (var row in rowPositions)
+            row: board[col]?[row]?.copyWith(position: Position(col: col, row: row))
+        }
+    };
+
+    // Get the piece at the `from` position
     ChessPiece? piece = simulatedBoard.getPiece(from);
+
     if (piece != null) {
-      simulatedBoard.board[to.row][chessColToIndex(to.col)] = piece.copyWith(position: to);
-      simulatedBoard.board[from.row][chessColToIndex(from.col)] = null;
+      // Move the piece to the `to` position
+      simulatedBoard.board[to.col]?[to.row] = piece.copyWith(position: to);
+      // Remove the piece from the `from` position
+      simulatedBoard.board[from.col]?[from.row] = null;
     }
 
-    simulatedBoard.currentTurn = currentTurn; // Preserve the turn
+    // Preserve the current turn in the simulated board
+    simulatedBoard.currentTurn = currentTurn;
+
     return simulatedBoard;
   }
+
 
   bool isKingInCheck(PlayerColor color) {
     Position? kingPosition = findKing(color);
@@ -217,13 +261,13 @@ class ChessBoard {
   bool isStalemate() {
     // Step 1: Check if the current player's king is in check
     if (isInCheck()) {
-      return false; // If in check, it cannot be a stalemate
+      return false; // If the king is in check, it cannot be a stalemate
     }
 
     // Step 2: Check if the current player has any legal moves
-    for (int row = 0; row < 8; row++) {
-      for (int col = 0; col < 8; col++) {
-        ChessPiece? piece = board[row][col];
+    for (var col in columnPositions) { // Iterate over columns ('a' to 'h')
+      for (var row in rowPositions) { // Iterate over rows (1 to 8)
+        ChessPiece? piece = board[col]?[row];
 
         // Skip empty squares and opponent's pieces
         if (piece == null || piece.color != currentTurn) {
@@ -231,10 +275,10 @@ class ChessBoard {
         }
 
         // Iterate over all possible target squares
-        for (int targetRow = 0; targetRow < 8; targetRow++) {
-          for (int targetCol = 0; targetCol < 8; targetCol++) {
-            Position from = Position(row: row, col: indexToChessCol(col));
-            Position to = Position(row: targetRow, col: indexToChessCol(targetCol));
+        for (var targetCol in columnPositions) {
+          for (var targetRow in rowPositions) {
+            Position from = Position(col: col, row: row);
+            Position to = Position(col: targetCol, row: targetRow);
 
             // Check if the move is valid
             if (isValidMove(from, to, piece)) {
@@ -245,9 +289,10 @@ class ChessBoard {
       }
     }
 
-    // If no legal moves are found and the player is not in check, it's a stalemate
+    // If no legal moves are found and the king is not in check, it's a stalemate
     return true;
   }
+
 
   int chessColToIndex(String col) {
     // Convert chess column ('a'-'h') to array index (0-7)
