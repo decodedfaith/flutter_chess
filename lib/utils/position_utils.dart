@@ -53,4 +53,5 @@ class PositionUtils {
     // Convert array index (0-7) to chess column ('a'-'h')
     return String.fromCharCode('a'.codeUnitAt(0) + colIndex);
   }
+  
 }

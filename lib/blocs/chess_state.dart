@@ -29,7 +29,7 @@ class Checkmate extends ChessState {
 class Stalemate extends ChessState {
   Stalemate(super.board);
 }
-
+// TODO
 class ChessError extends ChessState {
   final String message;
   ChessError(this.message, super.board);
