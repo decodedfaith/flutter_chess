@@ -8,7 +8,7 @@ void main() {
   group('Chess Game UI Tests', () {
     testWidgets('ChessBoardWidget renders correctly', (WidgetTester tester) async {
       final chessBoard = ChessBoard();
-      final chessCubit = ChessCubit(); // Initialize chessCubit here
+      final chessCubit = ChessCubit(); 
       
       chessBoard.initializeBoard();
 
@@ -17,7 +17,7 @@ void main() {
           home: Scaffold(
             body: ChessBoardWidget(
               chessBoard: chessBoard,
-              chessCubit: chessCubit, // Pass the initialized chessCubit
+              chessCubit: chessCubit, 
             ),
           ),
         ),
