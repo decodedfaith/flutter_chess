@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chess/blocs/chess_cubit.dart';
 import 'package:flutter_chess/blocs/chess_state.dart';
 import 'package:flutter_chess/screens/chess_board_widget.dart';
-import 'package:flutter_chess/screens/user_profile.dart';
 import 'package:flutter_svg/svg.dart';
 
 class ChessScreen extends StatelessWidget {
@@ -61,35 +60,11 @@ class ChessScreen extends StatelessWidget {
   }
 
   Widget _buildGameBoard(BuildContext context, ChessState state) {
-    final chessCubit = BlocProvider.of<ChessCubit>(context); // Access chessCubit
+    final chessCubit =
+        BlocProvider.of<ChessCubit>(context); // Access chessCubit
 
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(height: 26, child: _buildMoveHistory()),
-          const UserProfile(color: 'Black'),
-          const SizedBox(height: 40),
-          ChessBoardWidget(chessBoard: state.board, chessCubit: chessCubit), // Pass chessCubit
-          const SizedBox(height: 40),
-          const UserProfile(color: 'White'),
-          const Text(
-            'User Stats or Info',
-            style: TextStyle(
-              fontSize: 16.0,
-              color: Colors.black54,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMoveHistory() {
-    return Container(
-      color: Colors.grey,
-      child: const Text("1. e4  d5  2. exd5 Qxd5 3. Nc3"),
+      child: ChessBoardWidget(chessBoard: state.board, chessCubit: chessCubit),
     );
   }
 }
