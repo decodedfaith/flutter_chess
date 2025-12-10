@@ -4,13 +4,14 @@ import 'package:flutter_chess/game/position.dart';
 import 'package:flutter_chess/models/player_color.dart';
 
 class Rook extends ChessPiece {
-  List<String> columnPositions = ['a','b','c','d','e','f','g','h'];
+  List<String> columnPositions = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 
-  Rook(PlayerColor color, Position position) : super(color, 'rook', position);
+  Rook(PlayerColor color, Position position, {String? id})
+      : super(color, 'rook', position, id: id);
 
   @override
   Rook copyWith({Position? position}) {
-    return Rook(color, position ?? this.position);
+    return Rook(color, position ?? this.position, id: id);
   }
 
   @override
@@ -25,12 +26,20 @@ class Rook extends ChessPiece {
     }
 
     // Determine the direction of movement
-    int stepX = toPosition.col == position.col ? 0 : (columnPositions.indexOf(toPosition.col) > columnPositions.indexOf(position.col) ? 1 : -1);
-    int stepY = toPosition.row == position.row ? 0 : (toPosition.row > position.row ? 1 : -1);
+    int stepX = toPosition.col == position.col
+        ? 0
+        : (columnPositions.indexOf(toPosition.col) >
+                columnPositions.indexOf(position.col)
+            ? 1
+            : -1);
+    int stepY = toPosition.row == position.row
+        ? 0
+        : (toPosition.row > position.row ? 1 : -1);
 
     // Traverse the path and check for blocking pieces
-    for (int x = chessColToIndex(position.col) + stepX, y = position.row + stepY;
-        x != toPosition.col || y != toPosition.row;
+    for (int x = chessColToIndex(position.col) + stepX,
+            y = position.row + stepY;
+        (x != chessColToIndex(toPosition.col) || y != toPosition.row);
         x += stepX, y += stepY) {
       if (!board.isEmpty(Position(row: y, col: indexToChessCol(x)))) {
         return false; // Path is blocked
@@ -48,7 +57,10 @@ class Rook extends ChessPiece {
 
     // Horizontal and vertical directions
     List<List<int>> directions = [
-      [0, 1], [0, -1], [1, 0], [-1, 0]
+      [0, 1],
+      [0, -1],
+      [1, 0],
+      [-1, 0]
     ];
 
     for (var direction in directions) {
@@ -69,10 +81,12 @@ class Rook extends ChessPiece {
       }
     }
 
-    return moves.where((move) => board.isValidMove(position, move, this)).toList();
+    return moves
+        .where((move) => board.isValidMove(position, move, this))
+        .toList();
   }
 
-   int chessColToIndex(String col) {
+  int chessColToIndex(String col) {
     // Convert chess column ('a'-'h') to array index (0-7)
     return col.codeUnitAt(0) - 'a'.codeUnitAt(0);
   }
@@ -81,6 +95,4 @@ class Rook extends ChessPiece {
     // Convert array index (0-7) to chess column ('a'-'h')
     return String.fromCharCode('a'.codeUnitAt(0) + colIndex);
   }
-
-
 }
