@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chess/blocs/chess_cubit.dart';
 import 'package:flutter_chess/game/chess_board.dart';
 import 'package:flutter_chess/game/chess_game.dart';
+import 'package:flutter_chess/game/overlays/game_info_overlay.dart';
 
 class ChessBoardWidget extends StatelessWidget {
   final ChessBoard chessBoard;
@@ -18,6 +19,10 @@ class ChessBoardWidget extends StatelessWidget {
         aspectRatio: 1,
         child: GameWidget(
           game: ChessGame(chessCubit: chessCubit),
+          overlayBuilderMap: {
+            'GameInfo': (context, game) => const GameInfoOverlay(),
+          },
+          initialActiveOverlays: const ['GameInfo'],
         ),
       ),
     );
