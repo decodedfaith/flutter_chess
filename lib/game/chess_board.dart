@@ -178,31 +178,23 @@ class ChessBoard {
   }
 
   bool noValidMoves(PlayerColor playerColor) {
-    // Iterate through all pieces of the current player and check for valid moves
+    // Optimized: O(n²) instead of O(n⁴)
+    // Only iterate pieces, use their pre-computed valid moves
     for (var col in columnPositions) {
-      // Iterate over columns ('a' to 'h')
       for (var row in rowPositions) {
-        // Iterate over rows (1 to 8)
-        ChessPiece? piece = board[col]?[row];
+        ChessPiece? piece = board[col]![row];
 
         if (piece != null && piece.color == playerColor) {
-          // Check all possible target positions
-          for (var targetCol in columnPositions) {
-            for (var targetRow in rowPositions) {
-              Position to = Position(col: targetCol, row: targetRow);
-
-              // Check if the piece has a valid move to the target position
-              if (piece.isValidMove(to, this)) {
-                return false; // A valid move exists
-              }
-            }
+          // Use piece's getValidMoves (already filters out check-exposing moves)
+          final validMoves = piece.getValidMoves(this);
+          if (validMoves.isNotEmpty) {
+            return false; // Found at least one valid move
           }
         }
       }
     }
 
-    // If no valid moves are found, return true
-    return true;
+    return true; // No valid moves found
   }
 
   ChessPiece? getPiece(Position position) {
