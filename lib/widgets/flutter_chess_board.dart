@@ -62,6 +62,8 @@ class FlutterChessBoard extends StatelessWidget {
             // Visual row 0 = Rank 8, Visual row 7 = Rank 1
             final logicalRow = 8 - row;
             final logicalCol = String.fromCharCode('a'.codeUnitAt(0) + col);
+            final position = Position(row: logicalRow, col: logicalCol);
+
             // Check if this square is selected or a valid move
             final isSelected = cubit.selectedPosition == position;
             final isValidMove = cubit.selectedPiece != null &&
