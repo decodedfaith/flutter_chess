@@ -19,6 +19,9 @@ class ChessBoard {
   final List<int> rowPositions = [1, 2, 3, 4, 5, 6, 7, 8];
   final List<String> columnPositions = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 
+  // Game statistics
+  int moveCount = 0;
+
   ChessBoard() {
     // Initialize the board as a map of maps
     board = Map.fromEntries(
@@ -115,6 +118,9 @@ class ChessBoard {
         currentTurn = currentTurn == PlayerColor.white
             ? PlayerColor.black
             : PlayerColor.white;
+
+        // Increment move counter
+        moveCount++;
       } else {
         throw Exception('Invalid move for ${piece.runtimeType}');
       }
