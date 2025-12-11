@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_chess/blocs/chess_cubit.dart';
-import 'package:flutter_chess/screens/chess_screen.dart';
+import 'package:flutter_chess/screens/landing_page.dart';
 
 void main() {
-  runApp(const ChessApp());
+  runApp(const MyApp());
 }
 
-class ChessApp extends StatelessWidget {
-  const ChessApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => ChessCubit()..initializeBoard(),
-      child: const MaterialApp(
-        debugShowCheckedModeBanner: false,
-        home: ChessScreen(),
+    return MaterialApp(
+      title: 'Flutter Chess',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.purple,
+        useMaterial3: true,
       ),
+      home: const LandingPage(),
     );
   }
 }
