@@ -24,12 +24,9 @@ class ChessBoard {
   // Game statistics
   int moveCount = 0;
 
-<<<<<<< HEAD
   // En passant tracking
   Position? enPassantTarget;
 
-=======
->>>>>>> main
   ChessBoard() {
     // Initialize the board as a map of maps
     board = Map.fromEntries(
