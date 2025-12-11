@@ -118,10 +118,11 @@ class ChessBoard {
 
         // Handle en passant capture
         if (piece is Pawn && to == enPassantTarget) {
-          // Remove the captured pawn (it's one row behind the target)
-          int capturedRow =
-              piece.color == PlayerColor.white ? to.row - 1 : to.row + 1;
-          ChessPiece? capturedPawn = board[to.col]![capturedRow];
+          // The captured pawn is on the SAME ROW as the attacking pawn (from.row)
+          // not on the target square row
+          // Example: Black a4 captures white b4 by moving to b3
+          // Captured pawn is on b4 (same row as a4)
+          ChessPiece? capturedPawn = board[to.col]![from.row];
           if (capturedPawn != null) {
             final captured = CapturedPiece(
               type: capturedPawn.type,
@@ -132,7 +133,8 @@ class ChessBoard {
             } else {
               capturedBlackPieces.add(captured);
             }
-            board[to.col]![capturedRow] = null; // Remove captured pawn
+            board[to.col]![from.row] =
+                null; // Remove captured pawn from original row
           }
         }
 
@@ -174,19 +176,21 @@ class ChessBoard {
           }
 
           // Set en passant target after 2-square pawn move
+          // Target is the SKIPPED square, not the destination
           if ((piece.color == PlayerColor.white &&
                   from.row == 2 &&
                   to.row == 4) ||
               (piece.color == PlayerColor.black &&
                   from.row == 7 &&
                   to.row == 5)) {
+            // Set target to the square the pawn passed through
             int targetRow = piece.color == PlayerColor.white ? 3 : 6;
             enPassantTarget = Position(col: to.col, row: targetRow);
           } else {
-            enPassantTarget = null; // Reset if not a 2-square move
+            enPassantTarget = null; // Reset for non-2-square pawn moves
           }
         } else {
-          enPassantTarget = null; // Reset for non-pawn moves
+          enPassantTarget = null; // Reset for any non-pawn move
         }
 
         // Switch turns

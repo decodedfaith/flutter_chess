@@ -4,23 +4,24 @@ import 'package:flutter_chess/game/chess_board.dart';
 import 'package:flutter_chess/game/chess_piece.dart';
 import 'package:flutter_chess/game/position.dart';
 import 'package:flutter_chess/models/player_color.dart';
+import 'package:flutter_chess/utils/check_detector.dart';
 
 class ChessCubit extends Cubit<ChessState> {
   final ChessBoard _chessBoard = ChessBoard();
   ChessPiece? selectedPiece;
   Position? selectedPosition;
 
-  ChessCubit() : super(ChessInitial(ChessBoard())) {
+  ChessCubit() : super(ChessInitial(board: ChessBoard())) {
     initializeBoard(); // Initialize board on creation
   }
 
   void initializeBoard() {
     _chessBoard.initializeBoard();
-    emit(ChessInitial(_chessBoard));
+    emit(ChessInitial(board: _chessBoard));
     // Force a second emit to ensure listeners (like BoardComponent) catch it
     // BlocListenable only triggers on changes, not initial state
     Future.delayed(const Duration(milliseconds: 10), () {
-      emit(ChessInitial(_chessBoard));
+      emit(ChessInitial(board: _chessBoard));
     });
   }
 
@@ -28,7 +29,9 @@ class ChessCubit extends Cubit<ChessState> {
     try {
       _chessBoard.movePiece(from, to); // Make the move
 
-      if (_chessBoard.isCheckmate()) {
+      // Use CheckDetector for all rule validation to verify checkmate/check/stalemate correctly
+      // This ensures consistent logic especially for pawn attacks
+      if (CheckDetector.isCheckmate(_chessBoard, _chessBoard.currentTurn)) {
         // Emit Checkmate state with winner
         emit(Checkmate(
           winner: _chessBoard.currentTurn == PlayerColor.white
@@ -37,13 +40,15 @@ class ChessCubit extends Cubit<ChessState> {
           moveCount: _chessBoard.moveCount,
           board: _chessBoard,
         ));
-      } else if (_chessBoard.isKingInCheck(_chessBoard.currentTurn)) {
+      } else if (CheckDetector.isKingInCheck(
+          _chessBoard, _chessBoard.currentTurn)) {
         // Emit CheckState if king is in check
         emit(CheckState(
           colorInCheck: _chessBoard.currentTurn,
           board: _chessBoard,
         ));
-      } else if (_chessBoard.isStalemate()) {
+      } else if (CheckDetector.isStalemate(
+          _chessBoard, _chessBoard.currentTurn)) {
         // Emit Stalemate state
         emit(Stalemate(
           moveCount: _chessBoard.moveCount,
@@ -82,7 +87,10 @@ class ChessCubit extends Cubit<ChessState> {
       selectedPosition = position;
 
       // Emit state with the updated board and piece selection
-      emit(MoveMade(_chessBoard.currentTurn, _chessBoard));
+      emit(MoveMade(
+        currentTurn: _chessBoard.currentTurn,
+        board: _chessBoard,
+      ));
     }
   }
 

@@ -78,7 +78,7 @@ class CapturedPiecesDisplay extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(4),
               border: Border.all(color: Colors.green, width: 1),
             ),

@@ -97,11 +97,15 @@ class _LandingPageState extends State<LandingPage> {
       constraints: const BoxConstraints(maxWidth: 500),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.95),
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.1),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 20,
             spreadRadius: 5,
           ),
@@ -249,17 +253,17 @@ class _LandingPageState extends State<LandingPage> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.green.withOpacity(0.5),
+              color: Colors.green.withValues(alpha: 0.5),
               blurRadius: 15,
               spreadRadius: 2,
             ),
           ],
         ),
-        child: Row(
+        child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.play_arrow, color: Colors.white, size: 32),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Text(
               'START GAME',
               style: TextStyle(
