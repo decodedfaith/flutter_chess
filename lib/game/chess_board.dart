@@ -7,13 +7,15 @@ import 'package:flutter_chess/game/pieces/queen.dart';
 import 'package:flutter_chess/game/pieces/rook.dart';
 import 'package:flutter_chess/game/position.dart';
 import 'package:flutter_chess/models/player_color.dart';
+import 'package:flutter_chess/models/captured_piece.dart';
 
 class ChessBoard {
   late Map<String, Map<int, ChessPiece?>> board;
   late PlayerColor currentTurn;
 
-  List<ChessPiece> capturedWhitePieces = [];
-  List<ChessPiece> capturedBlackPieces = [];
+  // Optimized capture storage using lightweight model
+  List<CapturedPiece> capturedWhitePieces = [];
+  List<CapturedPiece> capturedBlackPieces = [];
 
   // Chess columns and rows
   final List<int> rowPositions = [1, 2, 3, 4, 5, 6, 7, 8];
@@ -22,9 +24,12 @@ class ChessBoard {
   // Game statistics
   int moveCount = 0;
 
+<<<<<<< HEAD
   // En passant tracking
   Position? enPassantTarget;
 
+=======
+>>>>>>> main
   ChessBoard() {
     // Initialize the board as a map of maps
     board = Map.fromEntries(
@@ -92,13 +97,18 @@ class ChessBoard {
 
       // Validate the move
       if (piece.isValidMove(to, this)) {
-        // Check for capture
+        // Check for capture - use lightweight model
         ChessPiece? targetPiece = board[to.col]![to.row];
         if (targetPiece != null) {
+          final capturedPiece = CapturedPiece(
+            type: targetPiece.type,
+            color: targetPiece.color,
+          );
+
           if (targetPiece.color == PlayerColor.white) {
-            capturedWhitePieces.add(targetPiece);
+            capturedWhitePieces.add(capturedPiece);
           } else {
-            capturedBlackPieces.add(targetPiece);
+            capturedBlackPieces.add(capturedPiece);
           }
         }
 
@@ -116,13 +126,47 @@ class ChessBoard {
               piece.color == PlayerColor.white ? to.row - 1 : to.row + 1;
           ChessPiece? capturedPawn = board[to.col]![capturedRow];
           if (capturedPawn != null) {
+            final captured = CapturedPiece(
+              type: capturedPawn.type,
+              color: capturedPawn.color,
+            );
             if (capturedPawn.color == PlayerColor.white) {
-              capturedWhitePieces.add(capturedPawn);
+              capturedWhitePieces.add(captured);
             } else {
-              capturedBlackPieces.add(capturedPawn);
+              capturedBlackPieces.add(captured);
             }
             board[to.col]![capturedRow] = null; // Remove captured pawn
           }
+        }
+
+        // Handle castling
+        if (piece is King && (to.col == 'g' || to.col == 'c')) {
+          int rowDir = piece.color == PlayerColor.white ? 1 : 8;
+          // Kingside castling (King moves to g-file)
+          if (to.col == 'g' && to.row == rowDir) {
+            // Move rook from h to f
+            ChessPiece? rook = board['h']![rowDir];
+            if (rook != null) {
+              board['f']![rowDir] =
+                  rook.copyWith(position: Position(col: 'f', row: rowDir));
+              board['h']![rowDir] = null;
+            }
+          }
+          // Queenside castling (King moves to c-file)
+          else if (to.col == 'c' && to.row == rowDir) {
+            // Move rook from a to d
+            ChessPiece? rook = board['a']![rowDir];
+            if (rook != null) {
+              board['d']![rowDir] =
+                  rook.copyWith(position: Position(col: 'd', row: rowDir));
+              board['a']![rowDir] = null;
+            }
+          }
+        }
+
+        // Mark King/Rook as moved
+        if (piece is King || piece is Rook) {
+          board[to.col]![to.row] = piece.copyWith(position: to, hasMoved: true);
         }
 
         // Pawn promotion: auto-promote to Queen when reaching end rank
@@ -152,6 +196,9 @@ class ChessBoard {
         currentTurn = currentTurn == PlayerColor.white
             ? PlayerColor.black
             : PlayerColor.white;
+
+        // Increment move counter
+        moveCount++;
       } else {
         throw Exception('Invalid move for ${piece.runtimeType}');
       }
