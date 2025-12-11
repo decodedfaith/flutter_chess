@@ -24,6 +24,9 @@ class ChessBoard {
   // Game statistics
   int moveCount = 0;
 
+  // En passant tracking
+  Position? enPassantTarget;
+
   ChessBoard() {
     // Initialize the board as a map of maps
     board = Map.fromEntries(
@@ -113,6 +116,26 @@ class ChessBoard {
         // Update the piece's position
         piece.position = to;
 
+        // Handle en passant capture
+        if (piece is Pawn && to == enPassantTarget) {
+          // Remove the captured pawn (it's one row behind the target)
+          int capturedRow =
+              piece.color == PlayerColor.white ? to.row - 1 : to.row + 1;
+          ChessPiece? capturedPawn = board[to.col]![capturedRow];
+          if (capturedPawn != null) {
+            final captured = CapturedPiece(
+              type: capturedPawn.type,
+              color: capturedPawn.color,
+            );
+            if (capturedPawn.color == PlayerColor.white) {
+              capturedWhitePieces.add(captured);
+            } else {
+              capturedBlackPieces.add(captured);
+            }
+            board[to.col]![capturedRow] = null; // Remove captured pawn
+          }
+        }
+
         // Handle castling
         if (piece is King && (to.col == 'g' || to.col == 'c')) {
           int rowDir = piece.color == PlayerColor.white ? 1 : 8;
@@ -149,6 +172,21 @@ class ChessBoard {
               (piece.color == PlayerColor.black && to.row == 1)) {
             board[to.col]![to.row] = Queen(piece.color, to, id: piece.id);
           }
+
+          // Set en passant target after 2-square pawn move
+          if ((piece.color == PlayerColor.white &&
+                  from.row == 2 &&
+                  to.row == 4) ||
+              (piece.color == PlayerColor.black &&
+                  from.row == 7 &&
+                  to.row == 5)) {
+            int targetRow = piece.color == PlayerColor.white ? 3 : 6;
+            enPassantTarget = Position(col: to.col, row: targetRow);
+          } else {
+            enPassantTarget = null; // Reset if not a 2-square move
+          }
+        } else {
+          enPassantTarget = null; // Reset for non-pawn moves
         }
 
         // Switch turns
