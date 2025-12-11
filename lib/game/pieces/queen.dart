@@ -10,7 +10,7 @@ class Queen extends ChessPiece {
       : super(color, 'queen', position, id: id);
 
   @override
-  Queen copyWith({Position? position}) {
+  Queen copyWith({Position? position, bool? hasMoved}) {
     return Queen(color, position ?? this.position, id: id);
   }
 
