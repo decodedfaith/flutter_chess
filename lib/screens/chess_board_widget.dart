@@ -1,13 +1,11 @@
-import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chess/blocs/chess_cubit.dart';
 import 'package:flutter_chess/blocs/chess_state.dart';
 import 'package:flutter_chess/game/chess_board.dart';
-import 'package:flutter_chess/game/chess_game.dart';
-import 'package:flutter_chess/game/overlays/game_status_overlay.dart';
 import 'package:flutter_chess/models/player_color.dart';
 import 'package:flutter_chess/screens/game_hud.dart';
+import 'package:flutter_chess/widgets/flutter_chess_board.dart';
 
 class ChessBoardWidget extends StatelessWidget {
   final ChessBoard chessBoard;
@@ -39,18 +37,11 @@ class ChessBoardWidget extends StatelessWidget {
                     isTurn: board.currentTurn == PlayerColor.black,
                     capturedPieces: board.capturedWhitePieces,
                   ),
-                  // Game Board - constrained size
+                  // Game Board - Pure Flutter!
                   SizedBox(
                     width: maxBoardSize,
                     height: maxBoardSize,
-                    child: GameWidget(
-                      game: ChessGame(chessCubit: chessCubit),
-                      overlayBuilderMap: {
-                        'GameStatus': (context, game) =>
-                            const GameStatusOverlay(),
-                      },
-                      initialActiveOverlays: const ['GameStatus'],
-                    ),
+                    child: const FlutterChessBoard(),
                   ),
                   // Bottom HUD (White)
                   GameHUD(

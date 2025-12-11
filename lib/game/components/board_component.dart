@@ -33,6 +33,16 @@ class BoardComponent extends PositionComponent
   double get squareSize => size.x / 8;
 
   @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+    print('BoardComponent loaded: size=$size, squareSize=$squareSize');
+  }
+
+  // Override to also listen to initial state (not just changes)
+  @override
+  bool listenWhen(ChessState previousState, ChessState newState) => true;
+
+  @override
   void render(Canvas canvas) {
     super.render(canvas);
     for (var i = 0; i < 8; i++) {
@@ -98,6 +108,7 @@ class BoardComponent extends PositionComponent
   }
 
   void _syncPieces(ChessBoard board) {
+    print('_syncPieces called, squareSize=$squareSize, boardSize=$size');
     final Set<String> activePieceIds = {};
 
     // 1. Iterate ALL squares to find pieces
@@ -136,6 +147,14 @@ class BoardComponent extends PositionComponent
             final comp = PieceComponent(piece: piece);
             comp.position = targetVector;
             comp.size = Vector2.all(squareSize);
+            comp.anchor = Anchor.topLeft; // Explicit anchor
+
+            // Debug: Print first few pieces to verify positioning
+            if (_pieceComponents.length < 3) {
+              print(
+                  'DEBUG: Placing ${piece.runtimeType} at ${pos.col}${pos.row} -> Vector($targetVector) size=$squareSize');
+            }
+
             add(comp);
             _pieceComponents[piece.id] = comp;
           }

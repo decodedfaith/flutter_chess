@@ -17,6 +17,11 @@ class ChessCubit extends Cubit<ChessState> {
   void initializeBoard() {
     _chessBoard.initializeBoard();
     emit(ChessInitial(_chessBoard));
+    // Force a second emit to ensure listeners (like BoardComponent) catch it
+    // BlocListenable only triggers on changes, not initial state
+    Future.delayed(const Duration(milliseconds: 10), () {
+      emit(ChessInitial(_chessBoard));
+    });
   }
 
   void makeMove(Position from, Position to) {
