@@ -8,7 +8,7 @@ class Pawn extends ChessPiece {
       : super(color, 'pawn', position, id: id);
 
   @override
-  Pawn copyWith({Position? position}) {
+  Pawn copyWith({Position? position, bool? hasMoved}) {
     return Pawn(color, position ?? this.position, id: id);
   }
 

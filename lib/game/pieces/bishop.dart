@@ -10,7 +10,7 @@ class Bishop extends ChessPiece {
       : super(color, 'bishop', position, id: id);
 
   @override
-  Bishop copyWith({Position? position}) {
+  Bishop copyWith({Position? position, bool? hasMoved}) {
     return Bishop(color, position ?? this.position, id: id);
   }
 
