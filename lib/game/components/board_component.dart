@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/events.dart';
@@ -7,25 +6,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chess/blocs/chess_cubit.dart';
 import 'package:flutter_chess/blocs/chess_state.dart';
 import 'package:flutter_chess/game/chess_board.dart';
-import 'package:flutter_chess/game/chess_piece.dart';
 import 'package:flutter_chess/game/components/piece_component.dart';
 import 'package:flutter_chess/game/position.dart';
 import 'package:flutter_chess/utils/audio_service.dart';
 
 class BoardComponent extends PositionComponent
     with FlameBlocListenable<ChessCubit, ChessState>, TapCallbacks {
-  static const double squareSize = 64.0; // Size of a single square
+  static const double squareSize = 64.0;
 
-  late final Sprite lightSquareSprite;
-  late final Sprite darkSquareSprite;
-
-  // Track pieces to animate/remove them easily
-  final Map<Position, PieceComponent> _pieceComponents = {};
+  // Track pieces by ID for robust updates
+  final Map<String, PieceComponent> _pieceComponents = {};
 
   final Paint _highlightPaint = Paint()
     ..color = Colors.yellow.withValues(alpha: 0.5);
   final Paint _validMovePaint = Paint()
     ..color = Colors.green.withValues(alpha: 0.5);
+
+  // Traditional Green/Cream colors
+  static const Color _lightColor = Color(0xFFEEEED2);
+  static const Color _darkColor = Color(0xFF769656);
 
   Position? _selectedPosition;
   List<Position> _validMoves = [];
@@ -33,38 +32,38 @@ class BoardComponent extends PositionComponent
   BoardComponent() : super(size: Vector2(squareSize * 8, squareSize * 8));
 
   @override
-  Future<void> onLoad() async {
-    super.onLoad();
-    // In a real app we might use sprites, but here I'll just draw rects in render
-    // or we could create SquareComponents. For efficiency, drawing is fine or child components.
-    // Let's us child components for pieces.
-  }
-
-  @override
   void render(Canvas canvas) {
     super.render(canvas);
-    for (var row = 0; row < 8; row++) {
-      for (var col = 0; col < 8; col++) {
-        final bool isLight = (row + col) % 2 == 0;
-        final Color color = isLight
-            ? const Color(0xFFEEEED2)
-            : const Color(0xFF769656); // Traditional green/cream
+    for (var i = 0; i < 8; i++) {
+      for (var j = 0; j < 8; j++) {
+        // i = Visual Row Index (0 = Top/Rank 8, 7 = Bottom/Rank 1)
+        // j = Visual Col Index (0 = File A, 7 = File H)
+
+        final bool isLight = (i + j) % 2 == 0;
+        final Color color = isLight ? _lightColor : _darkColor;
 
         final rect = Rect.fromLTWH(
-            col * squareSize, row * squareSize, squareSize, squareSize);
+            j * squareSize, i * squareSize, squareSize, squareSize);
         canvas.drawRect(rect, Paint()..color = color);
+
+        // Map Visual (i,j) to Logical Position for Highlighting
+        // Rank = 8 - i
+        // File = indexToChessCol(j)
+        final logicalRow = 8 - i;
+        final logicalCol = indexToChessCol(j);
 
         // Highlight selected
         if (_selectedPosition != null &&
-            _selectedPosition!.row == row &&
-            chessColToIndex(_selectedPosition!.col) == col) {
+            _selectedPosition!.row == logicalRow &&
+            _selectedPosition!.col == logicalCol) {
           canvas.drawRect(rect, _highlightPaint);
         }
 
         // Highlight valid moves
-        final pos = Position(row: row, col: indexToChessCol(col));
-        if (_validMoves.any((p) => p.row == row && p.col == pos.col)) {
-          // Draw a dot or highlight
+        // Check if ANY valid move matches this visual square
+        if (_validMoves
+            .any((p) => p.row == logicalRow && p.col == logicalCol)) {
+          // If capture (piece exists), maybe red? For now just dot.
           canvas.drawCircle(rect.center, squareSize / 6, _validMovePaint);
         }
       }
@@ -73,24 +72,19 @@ class BoardComponent extends PositionComponent
 
   @override
   void onNewState(ChessState state) {
+    // Always sync on these states
     if (state is ChessInitial ||
         state is MoveMade ||
         state is Checkmate ||
         state is CheckState ||
         state is Stalemate) {
-      if (state is ChessInitial) {
-        _syncPieces(state.board);
-      } else if (state is MoveMade) {
-        _syncPieces(state.board);
-        AudioService().playMoveSound();
-      } else if (state is Checkmate) {
-        _syncPieces(state.board);
-        AudioService().playGameOverSound();
-      } else if (state is CheckState) {
-        _syncPieces(state.board);
-        AudioService().playCheckSound();
-      }
-      // Update valid moves if a piece is selected
+      _syncPieces(state.board);
+
+      if (state is MoveMade) AudioService().playMoveSound();
+      if (state is Checkmate) AudioService().playGameOverSound();
+      if (state is CheckState) AudioService().playCheckSound();
+
+      // Update Selection Highlights
       final cubit = bloc;
       _selectedPosition = cubit.selectedPosition;
       if (_selectedPosition != null) {
@@ -103,133 +97,108 @@ class BoardComponent extends PositionComponent
   }
 
   void _syncPieces(ChessBoard board) {
-    // 1. Mark all pieces currently on the board
-    final Set<String> visiblePieceIds = {};
+    final Set<String> activePieceIds = {};
 
-    // 2. Iterate through the new board state
-    for (var row = 0; row < 8; row++) {
-      for (var col = 0; col < 8; col++) {
-        final pos = Position(row: row, col: indexToChessCol(col));
+    // 1. Iterate ALL squares to find pieces
+    for (var row = 1; row <= 8; row++) {
+      for (var colIndex = 0; colIndex < 8; colIndex++) {
+        final col = indexToChessCol(colIndex);
+        final pos = Position(col: col, row: row);
         final piece = board.getPiece(pos);
 
         if (piece != null) {
-          visiblePieceIds.add(piece.id);
+          activePieceIds.add(piece.id);
+          final targetVector = _boardPositionToVector(pos);
 
-          final targetPositionVector = _boardPositionToVector(pos);
+          if (_pieceComponents.containsKey(piece.id)) {
+            // Update existing piece
+            final comp = _pieceComponents[piece.id]!;
 
-          // Check if we already have a component for this piece ID
-          final existingComponentEntry = _pieceComponents.entries
-              .where((entry) => entry.value.piece.id == piece.id)
-              .firstOrNull;
+            // If position mismatch, animate
+            if (comp.position != targetVector) {
+              // Remove existing move effects to prevent conflict
+              comp.children
+                  .whereType<MoveEffect>()
+                  .forEach((e) => e.removeFromParent());
 
-          if (existingComponentEntry != null) {
-            // Update the key in the map if the position changed (conceptually, though map key is Position, which is problematic if piece moved)
-            // Actually, tracking by ID is better than tracking by Position in the Map.
-            // But let's stick to our Map<Position, Component> but we need to find it by ID first.
-            // Refactoring map to Map<String, PieceComponent> (d: pieceId) would be better.
-            // For this step, I'll search by ID.
-
-            final existingComponent = existingComponentEntry.value;
-            final currentPos = existingComponent.position;
-
-            // If position changed, animate
-            if (currentPos != targetPositionVector) {
-              existingComponent.add(
+              comp.add(
                 MoveEffect.to(
-                  targetPositionVector,
+                  targetVector,
                   EffectController(duration: 0.2, curve: Curves.easeInOut),
                 ),
               );
             }
-            // Update the piece data in the component (in case type changed e.g. promotion)
-            // existingComponent.piece = piece; // PieceComponent needs to support this if we did promotion
+            // Update internal piece reference (for capture logic etc) if needed
+            // comp.piece = piece; // Assuming PieceComponent allows this, or we just rely on ID
           } else {
-            // New piece (or we lost track), create it
-            _createPiece(piece, pos);
+            // New piece detected
+            final comp = PieceComponent(piece: piece);
+            comp.position = targetVector;
+            comp.size = Vector2.all(squareSize);
+            add(comp);
+            _pieceComponents[piece.id] = comp;
           }
         }
       }
     }
 
-    // 3. Remove pieces that are no longer on the board
-    final idsToRemove = _pieceComponents.values
-        .where((comp) => !visiblePieceIds.contains(comp.piece.id))
-        .map((comp) => comp.piece.id)
+    // 2. Remove pieces that are gone (Captured)
+    final idsToRemove = _pieceComponents.keys
+        .where((id) => !activePieceIds.contains(id))
         .toList();
 
-    // Remove components
-    _pieceComponents.removeWhere((pos, comp) {
-      if (idsToRemove.contains(comp.piece.id)) {
+    for (var id in idsToRemove) {
+      final comp = _pieceComponents[id];
+      if (comp != null) {
         remove(comp);
-        return true;
-      }
-      return false;
-    });
-
-    // Rebuild map to match new positions?
-    // The Map<Position, PieceComponent> concept is flawed if we want to track by ID easily.
-    // Let's rebuild the map based on the new positions of the components we kept.
-    // Actually, simpler: Just rebuild the map.
-    _pieceComponents.clear();
-    for (var child in children) {
-      if (child is PieceComponent) {
-        // Find logical position for this component from the board
-        // Iterate board to find pos for this piece.id
-        Position? logicalPos;
-        for (var row = 0; row < 8; row++) {
-          for (var col = 0; col < 8; col++) {
-            final p = Position(row: row, col: indexToChessCol(col));
-            final piece = board.getPiece(p);
-            if (piece != null && piece.id == child.piece.id) {
-              logicalPos = p;
-              break;
-            }
-          }
-          if (logicalPos != null) break;
-        }
-
-        if (logicalPos != null) {
-          _pieceComponents[logicalPos] = child;
-        }
+        _pieceComponents.remove(id);
       }
     }
-  }
-
-  void _createPiece(ChessPiece piece, Position pos) {
-    final comp = PieceComponent(piece: piece);
-    comp.position = _boardPositionToVector(pos);
-    comp.size = Vector2.all(squareSize);
-    add(comp);
-    _pieceComponents[pos] = comp;
   }
 
   Vector2 _boardPositionToVector(Position p) {
+    // Map Logical Position to Visual Vector
+    // Col 'a' -> 0 -> X=0
+    // Row 8 -> Y=0. Row 1 -> Y=7*64.
+    // Y = (8 - row) * 64
     final colIndex = chessColToIndex(p.col);
-    return Vector2(colIndex * squareSize, p.row * squareSize);
+    final visualRowIndex = 8 - p.row;
+    return Vector2(colIndex * squareSize, visualRowIndex * squareSize);
   }
 
   @override
   void onTapDown(TapDownEvent event) {
-    final colIndex = (event.localPosition.x / squareSize).floor();
-    final row = (event.localPosition.y / squareSize).floor();
+    final clickX = event.localPosition.x;
+    final clickY = event.localPosition.y;
 
-    if (colIndex >= 0 && colIndex < 8 && row >= 0 && row < 8) {
-      final clickedPos = Position(row: row, col: indexToChessCol(colIndex));
+    final visualColIndex = (clickX / squareSize).floor();
+    final visualRowIndex = (clickY / squareSize).floor();
 
+    if (visualColIndex >= 0 &&
+        visualColIndex < 8 &&
+        visualRowIndex >= 0 &&
+        visualRowIndex < 8) {
+      // Map Visual -> Logical
+      // Col: 0 -> 'a'
+      // Row: 0 -> 8
+      final logicalCol = indexToChessCol(visualColIndex);
+      final logicalRow = 8 - visualRowIndex;
+
+      final clickedPos = Position(row: logicalRow, col: logicalCol);
       final cubit = bloc;
+
+      // Interaction Logic
       if (cubit.selectedPiece == null) {
         cubit.selectPiece(clickedPos);
       } else {
-        // Attempt move or select different piece
         final pieceAtTarget = cubit.state.board.getPiece(clickedPos);
+        // Is this my piece? Select it.
         if (pieceAtTarget != null &&
             pieceAtTarget.color == cubit.selectedPiece!.color) {
-          // Change selection
           cubit.selectPiece(clickedPos);
         } else {
-          // Try move
+          // Attempt move
           cubit.makeMove(cubit.selectedPosition!, clickedPos);
-          // After move deselect handled by state change usually, or manual:
           cubit.selectedPiece = null;
           cubit.selectedPosition = null;
         }
