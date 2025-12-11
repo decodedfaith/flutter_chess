@@ -291,24 +291,19 @@ class ChessBoard {
     return simulatedBoard;
   }
 
-  bool isKingInCheck(PlayerColor color) {
-    Position? kingPosition = findKing(color);
-    if (kingPosition == null) {
-      throw Exception("King not found for color $color");
-    }
+  bool isKingInCheck(PlayerColor playerColor) {
+    Position? kingPosition = findKing(playerColor);
+    if (kingPosition == null) return false;
 
-    PlayerColor opponentColor =
-        color == PlayerColor.white ? PlayerColor.black : PlayerColor.white;
+    PlayerColor opponentColor = playerColor == PlayerColor.white
+        ? PlayerColor.black
+        : PlayerColor.white;
     for (var piece in getPiecesByColor(opponentColor)) {
       if (piece.getValidMoves(this).contains(kingPosition)) {
         return true;
       }
     }
     return false;
-  }
-
-    // If no legal moves are found and the king is not in check, it's a stalemate
-    return true;
   }
 
   int chessColToIndex(String col) {
