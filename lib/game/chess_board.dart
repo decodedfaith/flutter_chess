@@ -135,6 +135,19 @@ class ChessBoard {
         noValidMoves(currentTurn);
   }
 
+  bool isStalemate() {
+    // Stalemate: Not in check, but no valid moves
+    Position? kingPosition = findKing(currentTurn);
+    if (kingPosition == null) return false;
+
+    PlayerColor opponentColor = currentTurn == PlayerColor.white
+        ? PlayerColor.black
+        : PlayerColor.white;
+
+    return !isUnderAttack(kingPosition, opponentColor) &&
+        noValidMoves(currentTurn);
+  }
+
   bool isInCheck() {
     // Check if the current player's king is under attack
     Position? kingPosition = findKing(currentTurn);
