@@ -31,7 +31,12 @@ class ChessGame extends FlameGame {
       ),
     );
 
-    // Position the board in the center
+    // Size the board to match the game canvas
+    // Use 95% of the canvas to leave small margin
+    final boardSize = size.x < size.y ? size.x * 0.98 : size.y * 0.98;
+    boardComponent.size = Vector2.all(boardSize);
+
+    // Center the board
     boardComponent.position = size / 2;
     boardComponent.anchor = Anchor.center;
   }

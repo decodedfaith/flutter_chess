@@ -12,8 +12,6 @@ import 'package:flutter_chess/utils/audio_service.dart';
 
 class BoardComponent extends PositionComponent
     with FlameBlocListenable<ChessCubit, ChessState>, TapCallbacks {
-  static const double squareSize = 64.0;
-
   // Track pieces by ID for robust updates
   final Map<String, PieceComponent> _pieceComponents = {};
 
@@ -29,7 +27,10 @@ class BoardComponent extends PositionComponent
   Position? _selectedPosition;
   List<Position> _validMoves = [];
 
-  BoardComponent() : super(size: Vector2(squareSize * 8, squareSize * 8));
+  BoardComponent();
+
+  // Calculate square size dynamically from board size
+  double get squareSize => size.x / 8;
 
   @override
   void render(Canvas canvas) {

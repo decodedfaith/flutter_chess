@@ -21,33 +21,47 @@ class ChessBoardWidget extends StatelessWidget {
     return BlocBuilder<ChessCubit, ChessState>(
       builder: (context, state) {
         final board = state.board;
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Top HUD (Black)
-            GameHUD(
-              playerColor: PlayerColor.black,
-              isTurn: board.currentTurn == PlayerColor.black,
-              capturedPieces: board.capturedWhitePieces,
-            ),
-            // Game Board
-            AspectRatio(
-              aspectRatio: 1,
-              child: GameWidget(
-                game: ChessGame(chessCubit: chessCubit),
-                overlayBuilderMap: {
-                  'GameStatus': (context, game) => const GameStatusOverlay(),
-                },
-                initialActiveOverlays: const ['GameStatus'],
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            // Calculate board size - use 90% of smallest dimension
+            final screenSize = MediaQuery.of(context).size;
+            final maxBoardSize = screenSize.width < screenSize.height
+                ? screenSize.width * 0.95
+                : screenSize.height * 0.6;
+
+            return SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Top HUD (Black)
+                  GameHUD(
+                    playerColor: PlayerColor.black,
+                    isTurn: board.currentTurn == PlayerColor.black,
+                    capturedPieces: board.capturedWhitePieces,
+                  ),
+                  // Game Board - constrained size
+                  SizedBox(
+                    width: maxBoardSize,
+                    height: maxBoardSize,
+                    child: GameWidget(
+                      game: ChessGame(chessCubit: chessCubit),
+                      overlayBuilderMap: {
+                        'GameStatus': (context, game) =>
+                            const GameStatusOverlay(),
+                      },
+                      initialActiveOverlays: const ['GameStatus'],
+                    ),
+                  ),
+                  // Bottom HUD (White)
+                  GameHUD(
+                    playerColor: PlayerColor.white,
+                    isTurn: board.currentTurn == PlayerColor.white,
+                    capturedPieces: board.capturedBlackPieces,
+                  ),
+                ],
               ),
-            ),
-            // Bottom HUD (White)
-            GameHUD(
-              playerColor: PlayerColor.white,
-              isTurn: board.currentTurn == PlayerColor.white,
-              capturedPieces: board.capturedBlackPieces,
-            ),
-          ],
+            );
+          },
         );
       },
     );
