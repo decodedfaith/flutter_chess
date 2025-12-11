@@ -10,7 +10,6 @@ class ChessCubit extends Cubit<ChessState> {
   ChessPiece? selectedPiece;
   Position? selectedPosition;
 
-
   ChessCubit() : super(ChessInitial(ChessBoard())) {
     initializeBoard(); // Initialize board on creation
   }
@@ -18,20 +17,23 @@ class ChessCubit extends Cubit<ChessState> {
   void initializeBoard() {
     _chessBoard.initializeBoard();
     emit(ChessInitial(_chessBoard));
+    // Force a second emit to ensure listeners (like BoardComponent) catch it
+    // BlocListenable only triggers on changes, not initial state
+    Future.delayed(const Duration(milliseconds: 10), () {
+      emit(ChessInitial(_chessBoard));
+    });
   }
 
   void makeMove(Position from, Position to) {
     try {
       _chessBoard.movePiece(from, to); // Make the move
 
-      print("Hello world");
-      print(from);
-      print(to);
-
       if (_chessBoard.isCheckmate()) {
         // Emit Checkmate state with winner
         emit(Checkmate(
-          _chessBoard.currentTurn == PlayerColor.white ? PlayerColor.black : PlayerColor.white,
+          _chessBoard.currentTurn == PlayerColor.white
+              ? PlayerColor.black
+              : PlayerColor.white,
           _chessBoard,
         ));
       } else if (_chessBoard.isKingInCheck(_chessBoard.currentTurn)) {
@@ -52,7 +54,7 @@ class ChessCubit extends Cubit<ChessState> {
       }
     } catch (e) {
       // Emit ChessError state in case of exceptions
-      print(e);
+
       emit(ChessError(e.toString(), _chessBoard));
     }
   }
@@ -68,8 +70,6 @@ class ChessCubit extends Cubit<ChessState> {
       emit(MoveMade(_chessBoard.currentTurn, _chessBoard));
     }
   }
-
-
 
   void resetGame() {
     initializeBoard(); // Reinitialize board

@@ -6,11 +6,12 @@ import 'package:flutter_chess/game/position.dart';
 import 'package:flutter_chess/models/player_color.dart';
 
 class Queen extends ChessPiece {
-  Queen(PlayerColor color, Position position) : super(color, 'queen', position);
-  
+  Queen(PlayerColor color, Position position, {String? id})
+      : super(color, 'queen', position, id: id);
+
   @override
   Queen copyWith({Position? position}) {
-    return Queen(color, position ?? this.position);
+    return Queen(color, position ?? this.position, id: id);
   }
 
   @override
@@ -26,15 +27,19 @@ class Queen extends ChessPiece {
     int dy = (toPosition.row - position.row).abs();
 
     // Queen moves like both a Rook (horizontal/vertical) and Bishop (diagonal)
-    if (dx == dy || toPosition.row == position.row || toPosition.col == position.col) {
+    if (dx == dy ||
+        toPosition.row == position.row ||
+        toPosition.col == position.col) {
       // Check if the path is clear (no pieces blocking)
       int stepX = (toColInt - colInt) > 0 ? 1 : (toColInt < colInt ? -1 : 0);
-      int stepY = (toPosition.row - position.row) > 0 ? 1 : (toPosition.row < position.row ? -1 : 0);
+      int stepY = (toPosition.row - position.row) > 0
+          ? 1
+          : (toPosition.row < position.row ? -1 : 0);
 
       int x = colInt + stepX;
       int y = position.row + stepY;
 
-      while (x != toPosition.col || y != toPosition.row) {
+      while (x != chessColToIndex(toPosition.col) || y != toPosition.row) {
         if (!board.isEmpty(Position(row: y, col: indexToChessCol(x)))) {
           return false; // There's a piece blocking the path
         }
@@ -43,7 +48,8 @@ class Queen extends ChessPiece {
       }
 
       // Ensure the destination square is either empty or occupied by an opponent's piece
-      if (board.isEmpty(toPosition) || board.getPiece(toPosition)!.color != color) {
+      if (board.isEmpty(toPosition) ||
+          board.getPiece(toPosition)!.color != color) {
         return true;
       }
     }
@@ -78,10 +84,12 @@ class Queen extends ChessPiece {
       }
     }
 
-    return moves.where((move) => board.isValidMove(position, move, this)).toList();
+    return moves
+        .where((move) => board.isValidMove(position, move, this))
+        .toList();
   }
 
-   int chessColToIndex(String col) {
+  int chessColToIndex(String col) {
     // Convert chess column ('a'-'h') to array index (0-7)
     return col.codeUnitAt(0) - 'a'.codeUnitAt(0);
   }
@@ -90,5 +98,4 @@ class Queen extends ChessPiece {
     // Convert array index (0-7) to chess column ('a'-'h')
     return String.fromCharCode('a'.codeUnitAt(0) + colIndex);
   }
-
 }

@@ -6,11 +6,12 @@ import 'package:flutter_chess/game/position.dart';
 import 'package:flutter_chess/models/player_color.dart';
 
 class King extends ChessPiece {
-  King(PlayerColor color, Position position) : super(color, 'king', position);
-  
+  King(PlayerColor color, Position position, {String? id})
+      : super(color, 'king', position, id: id);
+
   @override
   King copyWith({Position? position}) {
-    return King(color, position ?? this.position);
+    return King(color, position ?? this.position, id: id);
   }
 
   @override
@@ -20,24 +21,33 @@ class King extends ChessPiece {
 
   @override
   bool isValidMove(Position toPosition, ChessBoard board) {
-    int dx = (chessColToIndex(toPosition.col) - chessColToIndex(position.col)).abs();
+    int dx =
+        (chessColToIndex(toPosition.col) - chessColToIndex(position.col)).abs();
     int dy = (toPosition.row - position.row).abs();
 
     // King moves one square in any direction
     if (dx <= 1 && dy <= 1) {
       // The king can move to any adjacent square, provided it doesn't move into check
-      if (board.isEmpty(toPosition) || board.getPiece(toPosition)!.color != color) {
+      if (board.isEmpty(toPosition) ||
+          board.getPiece(toPosition)!.color != color) {
         return true;
       }
     }
     return false;
   }
-  
+
   @override
   List<Position> getValidMoves(ChessBoard board) {
     List<Position> moves = [];
     List<List<int>> offsets = [
-      [1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+      [1, 1],
+      [1, -1],
+      [-1, 1],
+      [-1, -1]
     ];
 
     for (var offset in offsets) {
@@ -52,7 +62,9 @@ class King extends ChessPiece {
       }
     }
 
-    return moves.where((move) => board.isValidMove(position, move, this)).toList();
+    return moves
+        .where((move) => board.isValidMove(position, move, this))
+        .toList();
   }
 
   int chessColToIndex(String col) {
@@ -64,6 +76,4 @@ class King extends ChessPiece {
     // Convert array index (0-7) to chess column ('a'-'h')
     return String.fromCharCode('a'.codeUnitAt(0) + colIndex);
   }
-
-
 }
