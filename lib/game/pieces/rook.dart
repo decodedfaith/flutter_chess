@@ -5,13 +5,16 @@ import 'package:flutter_chess/models/player_color.dart';
 
 class Rook extends ChessPiece {
   List<String> columnPositions = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+  final bool hasMoved;
 
-  Rook(PlayerColor color, Position position, {String? id})
+  Rook(PlayerColor color, Position position,
+      {this.hasMoved = false, String? id})
       : super(color, 'rook', position, id: id);
 
   @override
-  Rook copyWith({Position? position}) {
-    return Rook(color, position ?? this.position, id: id);
+  Rook copyWith({Position? position, bool? hasMoved}) {
+    return Rook(color, position ?? this.position,
+        hasMoved: hasMoved ?? this.hasMoved, id: id);
   }
 
   @override

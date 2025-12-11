@@ -6,12 +6,16 @@ import 'package:flutter_chess/game/position.dart';
 import 'package:flutter_chess/models/player_color.dart';
 
 class King extends ChessPiece {
-  King(PlayerColor color, Position position, {String? id})
+  final bool hasMoved;
+
+  King(PlayerColor color, Position position,
+      {this.hasMoved = false, String? id})
       : super(color, 'king', position, id: id);
 
   @override
-  King copyWith({Position? position}) {
-    return King(color, position ?? this.position, id: id);
+  King copyWith({Position? position, bool? hasMoved}) {
+    return King(color, position ?? this.position,
+        hasMoved: hasMoved ?? this.hasMoved, id: id);
   }
 
   @override
