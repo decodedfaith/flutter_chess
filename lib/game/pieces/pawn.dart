@@ -45,10 +45,17 @@ class Pawn extends ChessPiece {
     if (toPosition.row == position.row + direction &&
         (chessColToIndex(toPosition.col) == chessColToIndex(position.col) + 1 ||
             chessColToIndex(toPosition.col) ==
-                chessColToIndex(position.col) - 1) &&
-        !board.isEmpty(toPosition) &&
-        board.getPiece(toPosition)!.color != color) {
-      return true;
+                chessColToIndex(position.col) - 1)) {
+      // Regular diagonal capture
+      if (!board.isEmpty(toPosition) &&
+          board.getPiece(toPosition)!.color != color) {
+        return true;
+      }
+
+      // En passant: can capture if moving to the en passant target square
+      if (toPosition == board.enPassantTarget) {
+        return true;
+      }
     }
 
     return false;

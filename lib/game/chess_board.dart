@@ -174,19 +174,21 @@ class ChessBoard {
           }
 
           // Set en passant target after 2-square pawn move
+          // Target is the SKIPPED square, not the destination
           if ((piece.color == PlayerColor.white &&
                   from.row == 2 &&
                   to.row == 4) ||
               (piece.color == PlayerColor.black &&
                   from.row == 7 &&
                   to.row == 5)) {
+            // Set target to the square the pawn passed through
             int targetRow = piece.color == PlayerColor.white ? 3 : 6;
             enPassantTarget = Position(col: to.col, row: targetRow);
           } else {
-            enPassantTarget = null; // Reset if not a 2-square move
+            enPassantTarget = null; // Reset for non-2-square pawn moves
           }
         } else {
-          enPassantTarget = null; // Reset for non-pawn moves
+          enPassantTarget = null; // Reset for any non-pawn move
         }
 
         // Switch turns
