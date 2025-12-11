@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_chess/game/chess_piece.dart';
+import 'package:flutter_chess/models/captured_piece.dart';
 import 'package:flutter_chess/models/player_color.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_chess/widgets/captured_pieces_display.dart';
 
 class GameHUD extends StatelessWidget {
   final PlayerColor playerColor;
   final bool isTurn;
-  final List<ChessPiece> capturedPieces;
+  final List<CapturedPiece> capturedPieces;
 
   const GameHUD({
     super.key,
@@ -38,7 +38,10 @@ class GameHUD extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          _CapturedPiecesRow(pieces: capturedPieces),
+          CapturedPiecesDisplay(
+            capturedPieces: capturedPieces,
+            displayFor: playerColor,
+          ),
         ],
       ),
     );
@@ -70,29 +73,6 @@ class _PlayerAvatar extends StatelessWidget {
               ]
             : [],
       ),
-    );
-  }
-}
-
-class _CapturedPiecesRow extends StatelessWidget {
-  final List<ChessPiece> pieces;
-
-  const _CapturedPiecesRow({required this.pieces});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: pieces.map((piece) {
-        return Padding(
-          padding: const EdgeInsets.only(left: -8), // Overlap slightly
-          child: SvgPicture.asset(
-            piece.getSvgAssetPath(),
-            height: 24,
-            width: 24,
-          ),
-        );
-      }).toList(),
     );
   }
 }
