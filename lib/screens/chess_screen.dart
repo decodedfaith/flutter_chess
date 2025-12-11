@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chess/blocs/chess_cubit.dart';
 import 'package:flutter_chess/blocs/chess_state.dart';
 import 'package:flutter_chess/screens/chess_board_widget.dart';
+import 'package:flutter_chess/widgets/game_end_dialog.dart';
 import 'package:flutter_svg/svg.dart';
 
 class ChessScreen extends StatelessWidget {
@@ -16,9 +17,39 @@ class ChessScreen extends StatelessWidget {
         title: _buildAppBarTitle(),
         centerTitle: true,
       ),
-      body: BlocBuilder<ChessCubit, ChessState>(
-        builder: (context, state) {
-          return _buildStateBody(context, state);
+      body: BlocListener<ChessCubit, ChessState>(
+        listener: (context, state) {
+          // Show endgame dialog on checkmate or stalemate
+          if (state is Checkmate || state is Stalemate) {
+            _showGameEndDialog(context, state);
+          }
+        },
+        child: BlocBuilder<ChessCubit, ChessState>(
+          builder: (context, state) {
+            return _buildStateBody(context, state);
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showGameEndDialog(BuildContext context, ChessState state) {
+    final cubit = context.read<ChessCubit>();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => GameEndDialog(
+        winner: state is Checkmate ? state.winner : null,
+        reason: state is Checkmate ? 'checkmate' : 'stalemate',
+        moveCount: state.board.moveCount,
+        onNewGame: () {
+          Navigator.of(dialogContext).pop();
+          cubit.initializeBoard();
+        },
+        onMainMenu: () {
+          Navigator.of(dialogContext).pop();
+          Navigator.of(context).pop();
         },
       ),
     );
