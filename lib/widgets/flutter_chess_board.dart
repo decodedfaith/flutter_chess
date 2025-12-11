@@ -7,6 +7,7 @@ import 'package:flutter_chess/game/chess_piece.dart';
 import 'package:flutter_chess/game/pieces/king.dart';
 import 'package:flutter_chess/game/position.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_chess/utils/check_detector.dart';
 
 class FlutterChessBoard extends StatelessWidget {
   const FlutterChessBoard({super.key});
@@ -67,9 +68,9 @@ class FlutterChessBoard extends StatelessWidget {
             // Check if this square is selected or a valid move
             final isSelected = cubit.selectedPosition == position;
             final isValidMove = cubit.selectedPiece != null &&
-                cubit.selectedPiece!
-                    .getValidMoves(state.board)
-                    .any((p) => p.row == logicalRow && p.col == logicalCol);
+                CheckDetector.getLegalMoves(state.board, cubit.selectedPiece!,
+                        cubit.selectedPosition!)
+                    .any((p) => p == position);
 
             // Check if king is in check at this position
             final pieceAtSquare = state.board.getPiece(position);
@@ -79,29 +80,65 @@ class FlutterChessBoard extends StatelessWidget {
 
             return GestureDetector(
               onTap: () => _handleSquareTap(context, position),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: isLight
-                      ? const Color(0xFFEEEED2)
-                      : const Color(0xFF769656),
-                  border: isSelected
-                      ? Border.all(color: Colors.yellow, width: 3)
-                      : isKingInCheck
-                          ? Border.all(color: Colors.red, width: 4)
-                          : null,
-                ),
-                child: isValidMove
-                    ? Center(
-                        child: Container(
-                          width: squareSize * 0.3,
-                          height: squareSize * 0.3,
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.3),
-                            shape: BoxShape.circle,
-                          ),
+              child: Stack(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isLight
+                          ? const Color(0xFFEEEED2)
+                          : const Color(0xFF769656),
+                      border: isSelected
+                          ? Border.all(color: Colors.yellow, width: 3)
+                          : isKingInCheck
+                              ? Border.all(color: Colors.red, width: 4)
+                              : null,
+                    ),
+                    child: isValidMove
+                        ? Center(
+                            child: Container(
+                              width: squareSize * 0.3,
+                              height: squareSize * 0.3,
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.3),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          )
+                        : null,
+                  ),
+                  // Rank Label (1-8) on the left edge
+                  if (col == 0)
+                    Positioned(
+                      top: 2,
+                      left: 2,
+                      child: Text(
+                        '$logicalRow',
+                        style: TextStyle(
+                          color: isLight
+                              ? const Color(0xFF769656)
+                              : const Color(0xFFEEEED2),
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
                         ),
-                      )
-                    : null,
+                      ),
+                    ),
+                  // File Label (a-h) on the bottom edge
+                  if (row == 7)
+                    Positioned(
+                      bottom: 2,
+                      right: 2,
+                      child: Text(
+                        logicalCol,
+                        style: TextStyle(
+                          color: isLight
+                              ? const Color(0xFF769656)
+                              : const Color(0xFFEEEED2),
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             );
           },
