@@ -103,6 +103,36 @@ class ChessBoard {
         // Update the piece's position
         piece.position = to;
 
+        // Handle castling
+        if (piece is King && (to.col == 'g' || to.col == 'c')) {
+          int rowDir = piece.color == PlayerColor.white ? 1 : 8;
+          // Kingside castling (King moves to g-file)
+          if (to.col == 'g' && to.row == rowDir) {
+            // Move rook from h to f
+            ChessPiece? rook = board['h']![rowDir];
+            if (rook != null) {
+              board['f']![rowDir] =
+                  rook.copyWith(position: Position(col: 'f', row: rowDir));
+              board['h']![rowDir] = null;
+            }
+          }
+          // Queenside castling (King moves to c-file)
+          else if (to.col == 'c' && to.row == rowDir) {
+            // Move rook from a to d
+            ChessPiece? rook = board['a']![rowDir];
+            if (rook != null) {
+              board['d']![rowDir] =
+                  rook.copyWith(position: Position(col: 'd', row: rowDir));
+              board['a']![rowDir] = null;
+            }
+          }
+        }
+
+        // Mark King/Rook as moved
+        if (piece is King || piece is Rook) {
+          board[to.col]![to.row] = piece.copyWith(position: to, hasMoved: true);
+        }
+
         // Pawn promotion: auto-promote to Queen when reaching end rank
         if (piece is Pawn) {
           if ((piece.color == PlayerColor.white && to.row == 8) ||
