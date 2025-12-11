@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chess/screens/landing_page.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const ChessApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class ChessApp extends StatelessWidget {
+  const ChessApp({super.key});
 
   @override
   Widget build(BuildContext context) {
