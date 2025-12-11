@@ -7,7 +7,6 @@ import 'package:flutter_chess/game/pieces/queen.dart';
 import 'package:flutter_chess/game/pieces/rook.dart';
 import 'package:flutter_chess/game/position.dart';
 import 'package:flutter_chess/models/player_color.dart';
-import 'package:flutter_chess/models/captured_piece.dart';
 
 class ChessBoard {
   late Map<String, Map<int, ChessPiece?>> board;
@@ -117,14 +116,10 @@ class ChessBoard {
               piece.color == PlayerColor.white ? to.row - 1 : to.row + 1;
           ChessPiece? capturedPawn = board[to.col]![capturedRow];
           if (capturedPawn != null) {
-            final captured = CapturedPiece(
-              type: capturedPawn.type,
-              color: capturedPawn.color,
-            );
             if (capturedPawn.color == PlayerColor.white) {
-              capturedWhitePieces.add(captured);
+              capturedWhitePieces.add(capturedPawn);
             } else {
-              capturedBlackPieces.add(captured);
+              capturedBlackPieces.add(capturedPawn);
             }
             board[to.col]![capturedRow] = null; // Remove captured pawn
           }
