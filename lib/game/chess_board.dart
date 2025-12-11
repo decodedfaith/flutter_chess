@@ -118,10 +118,11 @@ class ChessBoard {
 
         // Handle en passant capture
         if (piece is Pawn && to == enPassantTarget) {
-          // Remove the captured pawn (it's one row behind the target)
-          int capturedRow =
-              piece.color == PlayerColor.white ? to.row - 1 : to.row + 1;
-          ChessPiece? capturedPawn = board[to.col]![capturedRow];
+          // The captured pawn is on the SAME ROW as the attacking pawn (from.row)
+          // not on the target square row
+          // Example: Black a4 captures white b4 by moving to b3
+          // Captured pawn is on b4 (same row as a4)
+          ChessPiece? capturedPawn = board[to.col]![from.row];
           if (capturedPawn != null) {
             final captured = CapturedPiece(
               type: capturedPawn.type,
@@ -132,7 +133,8 @@ class ChessBoard {
             } else {
               capturedBlackPieces.add(captured);
             }
-            board[to.col]![capturedRow] = null; // Remove captured pawn
+            board[to.col]![from.row] =
+                null; // Remove captured pawn from original row
           }
         }
 
