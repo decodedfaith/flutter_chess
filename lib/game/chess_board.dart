@@ -94,8 +94,6 @@ class ChessBoard {
           } else {
             capturedBlackPieces.add(targetPiece);
           }
-          // AudioService().playCaptureSound(); // Logic moved to View/Component to keep model pure?
-          // Better to let state listener handle sound, as we are doing in BoardComponent.
         }
 
         // Perform the move
@@ -104,6 +102,14 @@ class ChessBoard {
 
         // Update the piece's position
         piece.position = to;
+
+        // Pawn promotion: auto-promote to Queen when reaching end rank
+        if (piece is Pawn) {
+          if ((piece.color == PlayerColor.white && to.row == 8) ||
+              (piece.color == PlayerColor.black && to.row == 1)) {
+            board[to.col]![to.row] = Queen(piece.color, to, id: piece.id);
+          }
+        }
 
         // Switch turns
         currentTurn = currentTurn == PlayerColor.white
