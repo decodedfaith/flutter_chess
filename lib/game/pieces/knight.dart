@@ -62,9 +62,7 @@ class Knight extends ChessPiece {
       }
     }
 
-    return moves
-        .where((move) => board.isValidMove(position, move, this))
-        .toList();
+    return moves;
   }
 
   int chessColToIndex(String col) {
