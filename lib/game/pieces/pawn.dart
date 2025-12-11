@@ -88,9 +88,8 @@ class Pawn extends ChessPiece {
       }
     }
 
-    return moves
-        .where((move) => board.isValidMove(position, move, this))
-        .toList();
+    // Return moves (check validation happens in board.isValidMove separately)
+    return moves;
   }
 
   int chessColToIndex(String col) {

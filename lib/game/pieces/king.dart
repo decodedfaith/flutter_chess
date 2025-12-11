@@ -63,9 +63,7 @@ class King extends ChessPiece {
       }
     }
 
-    return moves
-        .where((move) => board.isValidMove(position, move, this))
-        .toList();
+    return moves; // Check validation happens separately
   }
 
   int chessColToIndex(String col) {
