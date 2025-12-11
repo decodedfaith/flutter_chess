@@ -7,6 +7,7 @@ import 'package:flutter_chess/game/pieces/queen.dart';
 import 'package:flutter_chess/game/pieces/rook.dart';
 import 'package:flutter_chess/game/position.dart';
 import 'package:flutter_chess/models/player_color.dart';
+import 'package:flutter_chess/models/captured_piece.dart';
 
 class ChessBoard {
   late Map<String, Map<int, ChessPiece?>> board;
@@ -18,6 +19,12 @@ class ChessBoard {
   // Chess columns and rows
   final List<int> rowPositions = [1, 2, 3, 4, 5, 6, 7, 8];
   final List<String> columnPositions = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+
+  // Game statistics
+  int moveCount = 0;
+
+  // En passant tracking
+  Position? enPassantTarget;
 
   ChessBoard() {
     // Initialize the board as a map of maps
@@ -103,12 +110,47 @@ class ChessBoard {
         // Update the piece's position
         piece.position = to;
 
+        // Handle en passant capture
+        if (piece is Pawn && to == enPassantTarget) {
+          // Remove the captured pawn (it's one row behind the target)
+          int capturedRow =
+              piece.color == PlayerColor.white ? to.row - 1 : to.row + 1;
+          ChessPiece? capturedPawn = board[to.col]![capturedRow];
+          if (capturedPawn != null) {
+            final captured = CapturedPiece(
+              type: capturedPawn.type,
+              color: capturedPawn.color,
+            );
+            if (capturedPawn.color == PlayerColor.white) {
+              capturedWhitePieces.add(captured);
+            } else {
+              capturedBlackPieces.add(captured);
+            }
+            board[to.col]![capturedRow] = null; // Remove captured pawn
+          }
+        }
+
         // Pawn promotion: auto-promote to Queen when reaching end rank
         if (piece is Pawn) {
           if ((piece.color == PlayerColor.white && to.row == 8) ||
               (piece.color == PlayerColor.black && to.row == 1)) {
             board[to.col]![to.row] = Queen(piece.color, to, id: piece.id);
           }
+
+          // Set en passant target after 2-square pawn move
+          if ((piece.color == PlayerColor.white &&
+                  from.row == 2 &&
+                  to.row == 4) ||
+              (piece.color == PlayerColor.black &&
+                  from.row == 7 &&
+                  to.row == 5)) {
+            int targetRow = piece.color == PlayerColor.white ? 3 : 6;
+            enPassantTarget = Position(col: to.col, row: targetRow);
+          } else {
+            enPassantTarget = null; // Reset if not a 2-square move
+          }
+        } else {
+          enPassantTarget = null; // Reset for non-pawn moves
         }
 
         // Switch turns
