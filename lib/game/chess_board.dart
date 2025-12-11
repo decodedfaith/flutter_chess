@@ -307,39 +307,6 @@ class ChessBoard {
     return false;
   }
 
-  bool isStalemate() {
-    // Step 1: Check if the current player's king is in check
-    if (isInCheck()) {
-      return false; // If the king is in check, it cannot be a stalemate
-    }
-
-    // Step 2: Check if the current player has any legal moves
-    for (var col in columnPositions) {
-      // Iterate over columns ('a' to 'h')
-      for (var row in rowPositions) {
-        // Iterate over rows (1 to 8)
-        ChessPiece? piece = board[col]?[row];
-
-        // Skip empty squares and opponent's pieces
-        if (piece == null || piece.color != currentTurn) {
-          continue;
-        }
-
-        // Iterate over all possible target squares
-        for (var targetCol in columnPositions) {
-          for (var targetRow in rowPositions) {
-            Position from = Position(col: col, row: row);
-            Position to = Position(col: targetCol, row: targetRow);
-
-            // Check if the move is valid
-            if (isValidMove(from, to, piece)) {
-              return false; // A legal move exists, so not a stalemate
-            }
-          }
-        }
-      }
-    }
-
     // If no legal moves are found and the king is not in check, it's a stalemate
     return true;
   }
