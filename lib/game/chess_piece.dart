@@ -12,7 +12,7 @@ abstract class ChessPiece {
   ChessPiece(this.color, this.type, this.position, {String? id})
       : id = id ?? const Uuid().v4();
 
-  ChessPiece copyWith({Position? position});
+  ChessPiece copyWith({Position? position, bool? hasMoved});
 
   // Abstract method to get SVG asset path
   String getSvgAssetPath();
