@@ -39,29 +39,38 @@ class ChessCubit extends Cubit<ChessState> {
       } else if (_chessBoard.isKingInCheck(_chessBoard.currentTurn)) {
         // Emit CheckState if king is in check
         emit(CheckState(
-          _chessBoard.currentTurn,
-          _chessBoard,
+          colorInCheck: _chessBoard.currentTurn,
+          board: _chessBoard,
         ));
       } else if (_chessBoard.isStalemate()) {
         // Emit Stalemate state
-        emit(Stalemate(_chessBoard));
+        emit(Stalemate(
+          moveCount: _chessBoard.moveCount,
+          board: _chessBoard,
+        ));
       } else {
         // Emit MoveMade state
         emit(MoveMade(
-          _chessBoard.currentTurn,
-          _chessBoard,
+          currentTurn: _chessBoard.currentTurn,
+          board: _chessBoard,
         ));
       }
     } catch (e) {
       // Emit ChessError state in case of exceptions
-
-      emit(ChessError(e.toString(), _chessBoard));
+      emit(ChessError(
+        message: e.toString(),
+        board: _chessBoard,
+      ));
     }
   }
 
   void resign() {
     // Current player resigns, opponent wins
-    emit(Resignation(_chessBoard.currentTurn, _chessBoard));
+    emit(Resignation(
+      resignedPlayer: _chessBoard.currentTurn,
+      moveCount: _chessBoard.moveCount,
+      board: _chessBoard,
+    ));
   }
 
   void selectPiece(Position position) {
