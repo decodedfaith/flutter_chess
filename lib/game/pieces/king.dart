@@ -53,18 +53,17 @@ class King extends ChessPiece {
     for (var offset in offsets) {
       int newRow = position.row + offset[0];
       int newCol = chessColToIndex(position.col) + offset[1];
-      Position move = Position(row: newRow, col: indexToChessCol(newCol));
 
-      if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
+      // Correct bounds: rows are 1-8, cols are 0-7
+      if (newRow >= 1 && newRow <= 8 && newCol >= 0 && newCol < 8) {
+        Position move = Position(row: newRow, col: indexToChessCol(newCol));
         if (board.isEmpty(move) || board.getPiece(move)?.color != color) {
           moves.add(move);
         }
       }
     }
 
-    return moves
-        .where((move) => board.isValidMove(position, move, this))
-        .toList();
+    return moves; // Check validation happens separately
   }
 
   int chessColToIndex(String col) {

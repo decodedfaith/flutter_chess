@@ -19,11 +19,10 @@ class Pawn extends ChessPiece {
 
   @override
   bool isValidMove(Position toPosition, ChessBoard board) {
-    int direction =
-        color == PlayerColor.white ? 1 : -1; // White moves up, black moves down
-    int startRow = color == PlayerColor.white
-        ? 1
-        : 6; // Start rows for white (1) and black (6)
+    // White pawns move UP (increasing row: 2→3→4→8)
+    // Black pawns move DOWN (decreasing row: 7→6→5→1)
+    int direction = color == PlayerColor.white ? 1 : -1;
+    int startRow = color == PlayerColor.white ? 2 : 7;
 
     // Moving forward one square
     if (toPosition.row == position.row + direction &&
@@ -32,7 +31,7 @@ class Pawn extends ChessPiece {
       return true;
     }
 
-    // Moving forward two squares (only on the first move)
+    // Moving forward two squares (only from start row)
     if (position.row == startRow &&
         toPosition.row == position.row + 2 * direction &&
         toPosition.col == position.col &&
@@ -58,8 +57,8 @@ class Pawn extends ChessPiece {
   @override
   List<Position> getValidMoves(ChessBoard board) {
     List<Position> moves = [];
-    int direction =
-        color == PlayerColor.white ? -1 : 1; // White moves up, Black moves down
+    // Consistent direction: white UP (+1), black DOWN (-1)
+    int direction = color == PlayerColor.white ? 1 : -1;
 
     // Forward move
     Position forward =
@@ -67,9 +66,9 @@ class Pawn extends ChessPiece {
     if (board.isEmpty(forward)) {
       moves.add(forward);
 
-      // Two-square move from initial position
-      if ((color == PlayerColor.white && position.row == 6) ||
-          (color == PlayerColor.black && position.row == 1)) {
+      // Two-square move from start position (rank 2 for white, rank 7 for black)
+      if ((color == PlayerColor.white && position.row == 2) ||
+          (color == PlayerColor.black && position.row == 7)) {
         Position twoStep =
             Position(row: position.row + 2 * direction, col: position.col);
         if (board.isEmpty(twoStep)) moves.add(twoStep);
@@ -79,17 +78,18 @@ class Pawn extends ChessPiece {
     // Diagonal captures
     for (int offset in [-1, 1]) {
       int colInt = chessColToIndex(position.col) + offset;
-      Position diagonal =
-          Position(row: position.row + direction, col: indexToChessCol(colInt));
-      if (!board.isEmpty(diagonal) &&
-          board.getPiece(diagonal)?.color != color) {
-        moves.add(diagonal);
+      if (colInt >= 0 && colInt < 8) {
+        Position diagonal = Position(
+            row: position.row + direction, col: indexToChessCol(colInt));
+        if (!board.isEmpty(diagonal) &&
+            board.getPiece(diagonal)?.color != color) {
+          moves.add(diagonal);
+        }
       }
     }
 
-    return moves
-        .where((move) => board.isValidMove(position, move, this))
-        .toList();
+    // Return moves (check validation happens in board.isValidMove separately)
+    return moves;
   }
 
   int chessColToIndex(String col) {

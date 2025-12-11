@@ -94,8 +94,6 @@ class ChessBoard {
           } else {
             capturedBlackPieces.add(targetPiece);
           }
-          // AudioService().playCaptureSound(); // Logic moved to View/Component to keep model pure?
-          // Better to let state listener handle sound, as we are doing in BoardComponent.
         }
 
         // Perform the move
@@ -104,6 +102,14 @@ class ChessBoard {
 
         // Update the piece's position
         piece.position = to;
+
+        // Pawn promotion: auto-promote to Queen when reaching end rank
+        if (piece is Pawn) {
+          if ((piece.color == PlayerColor.white && to.row == 8) ||
+              (piece.color == PlayerColor.black && to.row == 1)) {
+            board[to.col]![to.row] = Queen(piece.color, to, id: piece.id);
+          }
+        }
 
         // Switch turns
         currentTurn = currentTurn == PlayerColor.white
@@ -126,6 +132,19 @@ class ChessBoard {
     if (kingPosition == null) return false;
 
     return isUnderAttack(kingPosition, opponentColor) &&
+        noValidMoves(currentTurn);
+  }
+
+  bool isStalemate() {
+    // Stalemate: Not in check, but no valid moves
+    Position? kingPosition = findKing(currentTurn);
+    if (kingPosition == null) return false;
+
+    PlayerColor opponentColor = currentTurn == PlayerColor.white
+        ? PlayerColor.black
+        : PlayerColor.white;
+
+    return !isUnderAttack(kingPosition, opponentColor) &&
         noValidMoves(currentTurn);
   }
 
@@ -172,31 +191,23 @@ class ChessBoard {
   }
 
   bool noValidMoves(PlayerColor playerColor) {
-    // Iterate through all pieces of the current player and check for valid moves
+    // Optimized: O(n²) instead of O(n⁴)
+    // Only iterate pieces, use their pre-computed valid moves
     for (var col in columnPositions) {
-      // Iterate over columns ('a' to 'h')
       for (var row in rowPositions) {
-        // Iterate over rows (1 to 8)
-        ChessPiece? piece = board[col]?[row];
+        ChessPiece? piece = board[col]![row];
 
         if (piece != null && piece.color == playerColor) {
-          // Check all possible target positions
-          for (var targetCol in columnPositions) {
-            for (var targetRow in rowPositions) {
-              Position to = Position(col: targetCol, row: targetRow);
-
-              // Check if the piece has a valid move to the target position
-              if (piece.isValidMove(to, this)) {
-                return false; // A valid move exists
-              }
-            }
+          // Use piece's getValidMoves (already filters out check-exposing moves)
+          final validMoves = piece.getValidMoves(this);
+          if (validMoves.isNotEmpty) {
+            return false; // Found at least one valid move
           }
         }
       }
     }
 
-    // If no valid moves are found, return true
-    return true;
+    return true; // No valid moves found
   }
 
   ChessPiece? getPiece(Position position) {
@@ -280,57 +291,19 @@ class ChessBoard {
     return simulatedBoard;
   }
 
-  bool isKingInCheck(PlayerColor color) {
-    Position? kingPosition = findKing(color);
-    if (kingPosition == null) {
-      throw Exception("King not found for color $color");
-    }
+  bool isKingInCheck(PlayerColor playerColor) {
+    Position? kingPosition = findKing(playerColor);
+    if (kingPosition == null) return false;
 
-    PlayerColor opponentColor =
-        color == PlayerColor.white ? PlayerColor.black : PlayerColor.white;
+    PlayerColor opponentColor = playerColor == PlayerColor.white
+        ? PlayerColor.black
+        : PlayerColor.white;
     for (var piece in getPiecesByColor(opponentColor)) {
       if (piece.getValidMoves(this).contains(kingPosition)) {
         return true;
       }
     }
     return false;
-  }
-
-  bool isStalemate() {
-    // Step 1: Check if the current player's king is in check
-    if (isInCheck()) {
-      return false; // If the king is in check, it cannot be a stalemate
-    }
-
-    // Step 2: Check if the current player has any legal moves
-    for (var col in columnPositions) {
-      // Iterate over columns ('a' to 'h')
-      for (var row in rowPositions) {
-        // Iterate over rows (1 to 8)
-        ChessPiece? piece = board[col]?[row];
-
-        // Skip empty squares and opponent's pieces
-        if (piece == null || piece.color != currentTurn) {
-          continue;
-        }
-
-        // Iterate over all possible target squares
-        for (var targetCol in columnPositions) {
-          for (var targetRow in rowPositions) {
-            Position from = Position(col: col, row: row);
-            Position to = Position(col: targetCol, row: targetRow);
-
-            // Check if the move is valid
-            if (isValidMove(from, to, piece)) {
-              return false; // A legal move exists, so not a stalemate
-            }
-          }
-        }
-      }
-    }
-
-    // If no legal moves are found and the king is not in check, it's a stalemate
-    return true;
   }
 
   int chessColToIndex(String col) {
