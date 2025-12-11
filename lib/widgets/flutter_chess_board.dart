@@ -4,6 +4,7 @@ import 'package:flutter_chess/blocs/chess_cubit.dart';
 import 'package:flutter_chess/blocs/chess_state.dart';
 import 'package:flutter_chess/game/chess_board.dart';
 import 'package:flutter_chess/game/chess_piece.dart';
+import 'package:flutter_chess/game/pieces/king.dart';
 import 'package:flutter_chess/game/position.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -61,7 +62,12 @@ class FlutterChessBoard extends StatelessWidget {
             // Visual row 0 = Rank 8, Visual row 7 = Rank 1
             final logicalRow = 8 - row;
             final logicalCol = String.fromCharCode('a'.codeUnitAt(0) + col);
-            final position = Position(row: logicalRow, col: logicalCol);
+            // Check if this square is selected or a valid move
+            final isSelected = cubit.selectedPosition == position;
+            final isValidMove = cubit.selectedPiece != null &&
+                cubit.selectedPiece!
+                    .getValidMoves(state.board)
+                    .any((p) => p.row == logicalRow && p.col == logicalCol);
 
             // Check if king is in check at this position
             final pieceAtSquare = state.board.getPiece(position);
