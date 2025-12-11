@@ -59,6 +59,11 @@ class ChessCubit extends Cubit<ChessState> {
     }
   }
 
+  void resign() {
+    // Current player resigns, opponent wins
+    emit(Resignation(_chessBoard.currentTurn, _chessBoard));
+  }
+
   void selectPiece(Position position) {
     // Logic to select the piece and highlight valid moves
     ChessPiece? piece = _chessBoard.getPiece(position);

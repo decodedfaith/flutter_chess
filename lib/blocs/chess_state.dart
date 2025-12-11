@@ -29,6 +29,12 @@ class Checkmate extends ChessState {
 class Stalemate extends ChessState {
   Stalemate(super.board);
 }
+
+class Resignation extends ChessState {
+  final PlayerColor loser; // Who resigned
+  Resignation(this.loser, super.board);
+}
+
 // TODO
 class ChessError extends ChessState {
   final String message;
