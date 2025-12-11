@@ -31,10 +31,11 @@ class ChessCubit extends Cubit<ChessState> {
       if (_chessBoard.isCheckmate()) {
         // Emit Checkmate state with winner
         emit(Checkmate(
-          _chessBoard.currentTurn == PlayerColor.white
+          winner: _chessBoard.currentTurn == PlayerColor.white
               ? PlayerColor.black
               : PlayerColor.white,
-          _chessBoard,
+          moveCount: _chessBoard.moveCount,
+          board: _chessBoard,
         ));
       } else if (_chessBoard.isKingInCheck(_chessBoard.currentTurn)) {
         // Emit CheckState if king is in check
