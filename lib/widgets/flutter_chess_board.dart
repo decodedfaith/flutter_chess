@@ -63,12 +63,11 @@ class FlutterChessBoard extends StatelessWidget {
             final logicalCol = String.fromCharCode('a'.codeUnitAt(0) + col);
             final position = Position(row: logicalRow, col: logicalCol);
 
-            // Check if this square is selected or a valid move
-            final isSelected = cubit.selectedPosition == position;
-            final isValidMove = cubit.selectedPiece != null &&
-                cubit.selectedPiece!
-                    .getValidMoves(state.board)
-                    .any((p) => p.row == logicalRow && p.col == logicalCol);
+            // Check if king is in check at this position
+            final pieceAtSquare = state.board.getPiece(position);
+            final isKingInCheck = state is CheckState &&
+                pieceAtSquare is King &&
+                pieceAtSquare.color == state.colorInCheck;
 
             return GestureDetector(
               onTap: () => _handleSquareTap(context, position),
@@ -79,7 +78,9 @@ class FlutterChessBoard extends StatelessWidget {
                       : const Color(0xFF769656),
                   border: isSelected
                       ? Border.all(color: Colors.yellow, width: 3)
-                      : null,
+                      : isKingInCheck
+                          ? Border.all(color: Colors.red, width: 4)
+                          : null,
                 ),
                 child: isValidMove
                     ? Center(
