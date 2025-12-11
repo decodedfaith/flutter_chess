@@ -7,13 +7,15 @@ import 'package:flutter_chess/game/pieces/queen.dart';
 import 'package:flutter_chess/game/pieces/rook.dart';
 import 'package:flutter_chess/game/position.dart';
 import 'package:flutter_chess/models/player_color.dart';
+import 'package:flutter_chess/models/captured_piece.dart';
 
 class ChessBoard {
   late Map<String, Map<int, ChessPiece?>> board;
   late PlayerColor currentTurn;
 
-  List<ChessPiece> capturedWhitePieces = [];
-  List<ChessPiece> capturedBlackPieces = [];
+  // Optimized capture storage using lightweight model
+  List<CapturedPiece> capturedWhitePieces = [];
+  List<CapturedPiece> capturedBlackPieces = [];
 
   // Chess columns and rows
   final List<int> rowPositions = [1, 2, 3, 4, 5, 6, 7, 8];
@@ -89,13 +91,18 @@ class ChessBoard {
 
       // Validate the move
       if (piece.isValidMove(to, this)) {
-        // Check for capture
+        // Check for capture - use lightweight model
         ChessPiece? targetPiece = board[to.col]![to.row];
         if (targetPiece != null) {
+          final capturedPiece = CapturedPiece(
+            type: targetPiece.type,
+            color: targetPiece.color,
+          );
+
           if (targetPiece.color == PlayerColor.white) {
-            capturedWhitePieces.add(targetPiece);
+            capturedWhitePieces.add(capturedPiece);
           } else {
-            capturedBlackPieces.add(targetPiece);
+            capturedBlackPieces.add(capturedPiece);
           }
         }
 
