@@ -1,10 +1,17 @@
 import 'package:flutter_chess/game/chess_board.dart';
+import 'package:flutter_chess/game/position.dart';
 import 'package:flutter_chess/models/player_color.dart';
 
 abstract class ChessState {
   final ChessBoard board;
+  final Position? lastMoveFrom;
+  final Position? lastMoveTo;
 
-  const ChessState({required this.board});
+  const ChessState({
+    required this.board,
+    this.lastMoveFrom,
+    this.lastMoveTo,
+  });
 }
 
 class ChessInitial extends ChessState {
@@ -12,7 +19,11 @@ class ChessInitial extends ChessState {
 }
 
 class GameInProgress extends ChessState {
-  const GameInProgress({required super.board});
+  const GameInProgress({
+    required super.board,
+    super.lastMoveFrom,
+    super.lastMoveTo,
+  });
 }
 
 class MoveMade extends GameInProgress {
@@ -21,6 +32,8 @@ class MoveMade extends GameInProgress {
   const MoveMade({
     required this.currentTurn,
     required super.board,
+    super.lastMoveFrom,
+    super.lastMoveTo,
   });
 }
 
@@ -31,6 +44,8 @@ class CheckState extends GameInProgress {
   const CheckState({
     required this.colorInCheck,
     required super.board,
+    super.lastMoveFrom,
+    super.lastMoveTo,
   });
 }
 
@@ -42,6 +57,8 @@ class Checkmate extends ChessState {
     required this.winner,
     required this.moveCount,
     required super.board,
+    super.lastMoveFrom,
+    super.lastMoveTo,
   });
 }
 
@@ -51,6 +68,8 @@ class Stalemate extends ChessState {
   const Stalemate({
     required this.moveCount,
     required super.board,
+    super.lastMoveFrom,
+    super.lastMoveTo,
   });
 }
 
@@ -62,6 +81,8 @@ class Resignation extends ChessState {
     required this.resignedPlayer,
     required this.moveCount,
     required super.board,
+    super.lastMoveFrom,
+    super.lastMoveTo,
   });
 }
 
@@ -71,5 +92,7 @@ class ChessError extends ChessState {
   const ChessError({
     required this.message,
     required super.board,
+    super.lastMoveFrom,
+    super.lastMoveTo,
   });
 }

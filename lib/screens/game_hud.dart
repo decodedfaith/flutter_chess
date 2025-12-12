@@ -4,12 +4,14 @@ import 'package:flutter_chess/models/player_color.dart';
 import 'package:flutter_chess/widgets/captured_pieces_display.dart';
 
 class GameHUD extends StatelessWidget {
+  final String playerName;
   final PlayerColor playerColor;
   final bool isTurn;
   final List<CapturedPiece> capturedPieces;
 
   const GameHUD({
     super.key,
+    required this.playerName,
     required this.playerColor,
     required this.isTurn,
     required this.capturedPieces,
@@ -19,23 +21,43 @@ class GameHUD extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isBlack = playerColor == PlayerColor.black;
     final color = isBlack ? Colors.black : Colors.white;
-    final textColor = isBlack ? Colors.white : Colors.black;
-    final backgroundColor = isBlack ? Colors.grey[900]! : Colors.grey[300]!;
+    const textColor = Colors.white; // Always white text on dark background
 
+    // Glassmorphism background for HUD
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      color: backgroundColor,
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.2),
+        border: Border.symmetric(
+          horizontal: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+      ),
       child: Row(
         children: [
           _PlayerAvatar(color: color, isTurn: isTurn),
           const SizedBox(width: 12),
-          Text(
-            isBlack ? "Black Player" : "White Player",
-            style: TextStyle(
-              color: textColor,
-              fontWeight: isTurn ? FontWeight.bold : FontWeight.normal,
-              fontSize: 18,
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                playerName,
+                style: TextStyle(
+                  color: textColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              if (isTurn)
+                Text(
+                  "Thinking...",
+                  style: TextStyle(
+                    color: Colors.greenAccent[400],
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+            ],
           ),
           const Spacer(),
           CapturedPiecesDisplay(

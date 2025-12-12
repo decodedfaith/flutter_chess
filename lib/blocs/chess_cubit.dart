@@ -27,6 +27,28 @@ class ChessCubit extends Cubit<ChessState> {
 
   void makeMove(Position from, Position to) {
     try {
+      // Validate move legality (Check rules, Pins, etc.)
+      final piece = _chessBoard.getPiece(from);
+      if (piece == null) {
+        throw Exception("No piece at source");
+      }
+
+      final legalMoves = CheckDetector.getLegalMoves(_chessBoard, piece, from);
+      if (!legalMoves.contains(to)) {
+        // Move is illegal (puts king in check, or violates other rules)
+        // If it was a Pseudo-valid move (geometry ok) but Illegal (Check), we catch it here.
+        // We can just return or emit error. Emitting error provides feedback.
+        // Check if it was at least pseudo-valid to give specific error?
+        // For now, generic illegal move.
+        // Actually, if we just return, the UI might stay in selected state?
+        // Let's emit error to reset selection or notify user?
+        // Or just ignore? "Move not allowed". error message is good.
+        emit(ChessError(
+            message: "Illegal move: King would be in check",
+            board: _chessBoard));
+        return;
+      }
+
       _chessBoard.movePiece(from, to); // Make the move
 
       // Use CheckDetector for all rule validation to verify checkmate/check/stalemate correctly
@@ -39,6 +61,8 @@ class ChessCubit extends Cubit<ChessState> {
               : PlayerColor.white,
           moveCount: _chessBoard.moveCount,
           board: _chessBoard,
+          lastMoveFrom: from,
+          lastMoveTo: to,
         ));
       } else if (CheckDetector.isKingInCheck(
           _chessBoard, _chessBoard.currentTurn)) {
@@ -46,6 +70,8 @@ class ChessCubit extends Cubit<ChessState> {
         emit(CheckState(
           colorInCheck: _chessBoard.currentTurn,
           board: _chessBoard,
+          lastMoveFrom: from,
+          lastMoveTo: to,
         ));
       } else if (CheckDetector.isStalemate(
           _chessBoard, _chessBoard.currentTurn)) {
@@ -53,12 +79,16 @@ class ChessCubit extends Cubit<ChessState> {
         emit(Stalemate(
           moveCount: _chessBoard.moveCount,
           board: _chessBoard,
+          lastMoveFrom: from,
+          lastMoveTo: to,
         ));
       } else {
         // Emit MoveMade state
         emit(MoveMade(
           currentTurn: _chessBoard.currentTurn,
           board: _chessBoard,
+          lastMoveFrom: from,
+          lastMoveTo: to,
         ));
       }
     } catch (e) {
@@ -66,6 +96,12 @@ class ChessCubit extends Cubit<ChessState> {
       emit(ChessError(
         message: e.toString(),
         board: _chessBoard,
+        // Error state might want to preserve previous lastMove if available?
+        // But Cubit doesn't store it separately from State.
+        // Accessing state.lastMoveFrom isn't easy inside Cubit methods unless we check state.
+        // For now, null is acceptable or we can try access current state.
+        lastMoveFrom: state.lastMoveFrom,
+        lastMoveTo: state.lastMoveTo,
       ));
     }
   }
@@ -90,6 +126,8 @@ class ChessCubit extends Cubit<ChessState> {
       emit(MoveMade(
         currentTurn: _chessBoard.currentTurn,
         board: _chessBoard,
+        lastMoveFrom: state.lastMoveFrom,
+        lastMoveTo: state.lastMoveTo,
       ));
     }
   }

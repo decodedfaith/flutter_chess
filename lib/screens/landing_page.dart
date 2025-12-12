@@ -57,7 +57,7 @@ class _LandingPageState extends State<LandingPage> {
                     color: Colors.white,
                   ),
                   const SizedBox(height: 16),
-                  Text(
+                  const Text(
                     'Flutter Chess',
                     style: TextStyle(
                       fontSize: 48,
@@ -66,7 +66,7 @@ class _LandingPageState extends State<LandingPage> {
                       letterSpacing: 2,
                     ),
                   ),
-                  Text(
+                  const Text(
                     'Master the Board',
                     style: TextStyle(
                       fontSize: 18,
@@ -284,7 +284,14 @@ class _LandingPageState extends State<LandingPage> {
       MaterialPageRoute(
         builder: (context) => BlocProvider(
           create: (context) => ChessCubit(),
-          child: const ChessScreen(),
+          child: ChessScreen(
+            whitePlayerName: player1Controller.text.trim().isEmpty
+                ? 'Player 1'
+                : player1Controller.text.trim(),
+            blackPlayerName: player2Controller.text.trim().isEmpty
+                ? (selectedMode == 'vs Bot' ? 'Bot' : 'Player 2')
+                : player2Controller.text.trim(),
+          ),
         ),
       ),
     );
