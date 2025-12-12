@@ -65,6 +65,10 @@ class FlutterChessBoard extends StatelessWidget {
             final logicalCol = String.fromCharCode('a'.codeUnitAt(0) + col);
             final position = Position(row: logicalRow, col: logicalCol);
 
+            // Check last move
+            final isLastMove =
+                state.lastMoveFrom == position || state.lastMoveTo == position;
+
             // Check if this square is selected or a valid move
             final isSelected = cubit.selectedPosition == position;
             final isValidMove = cubit.selectedPiece != null &&
@@ -84,22 +88,28 @@ class FlutterChessBoard extends StatelessWidget {
                 children: [
                   Container(
                     decoration: BoxDecoration(
-                      color: isLight
-                          ? const Color(0xFFEEEED2)
-                          : const Color(0xFF769656),
-                      border: isSelected
-                          ? Border.all(color: Colors.yellow, width: 3)
-                          : isKingInCheck
-                              ? Border.all(color: Colors.red, width: 4)
-                              : null,
+                      color: isKingInCheck
+                          ? Colors.red.withValues(alpha: 0.5)
+                          : isSelected
+                              ? Colors.yellow.withValues(alpha: 0.6)
+                              : isLastMove
+                                  ? const Color(0xFFF5F682) // Highlight color
+                                  : isLight
+                                      ? const Color(0xFFEEEED2)
+                                      : const Color(0xFF769656),
+                      // Border for selection or check
+                      border: isKingInCheck
+                          ? Border.all(color: Colors.red, width: 4)
+                          : null, // Removed excessive borders, rely on fill
                     ),
                     child: isValidMove
                         ? Center(
                             child: Container(
-                              width: squareSize * 0.3,
-                              height: squareSize * 0.3,
+                              width: squareSize * 0.35,
+                              height: squareSize * 0.35,
                               decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.3),
+                                color: Colors.black.withValues(
+                                    alpha: 0.2), // Subtle distinct dot
                                 shape: BoxShape.circle,
                               ),
                             ),

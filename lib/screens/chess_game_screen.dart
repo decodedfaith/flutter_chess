@@ -17,7 +17,12 @@ class ChessGameScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Chess Game'),
       ),
-      body: ChessBoardWidget(chessBoard: chessBoard, chessCubit: chessCubit,),
+      body: ChessBoardWidget(
+        chessBoard: chessBoard,
+        chessCubit: chessCubit,
+        whitePlayerName: 'White Player',
+        blackPlayerName: 'Black Player',
+      ),
     );
   }
 }

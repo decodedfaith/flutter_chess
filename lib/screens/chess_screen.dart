@@ -7,7 +7,14 @@ import 'package:flutter_chess/widgets/game_end_dialog.dart';
 import 'package:flutter_svg/svg.dart';
 
 class ChessScreen extends StatelessWidget {
-  const ChessScreen({super.key});
+  final String whitePlayerName;
+  final String blackPlayerName;
+
+  const ChessScreen({
+    super.key,
+    this.whitePlayerName = 'White Player',
+    this.blackPlayerName = 'Black Player',
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +89,12 @@ class ChessScreen extends StatelessWidget {
     // Always show the board, overlays handle Check/Checkmate alerts
     final chessCubit = BlocProvider.of<ChessCubit>(context);
     return Center(
-      child: ChessBoardWidget(chessBoard: state.board, chessCubit: chessCubit),
+      child: ChessBoardWidget(
+        chessBoard: state.board,
+        chessCubit: chessCubit,
+        whitePlayerName: whitePlayerName,
+        blackPlayerName: blackPlayerName,
+      ),
     );
   }
 }

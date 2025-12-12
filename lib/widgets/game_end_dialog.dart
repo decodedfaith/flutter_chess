@@ -60,7 +60,7 @@ class GameEndDialog extends StatelessWidget {
             end: Alignment.bottomRight,
             colors: [
               Colors.black.withValues(alpha: 0.5),
-              _primaryColor.withOpacity(0.05),
+              _primaryColor.withValues(alpha: 0.05),
             ],
           ),
           borderRadius: BorderRadius.circular(16),
