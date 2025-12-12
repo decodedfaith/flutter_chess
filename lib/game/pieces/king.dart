@@ -2,6 +2,7 @@
 
 import 'package:flutter_chess/game/chess_board.dart';
 import 'package:flutter_chess/game/chess_piece.dart';
+import 'package:flutter_chess/game/pieces/rook.dart';
 import 'package:flutter_chess/game/position.dart';
 import 'package:flutter_chess/models/player_color.dart';
 
@@ -31,12 +32,24 @@ class King extends ChessPiece {
 
     // King moves one square in any direction
     if (dx <= 1 && dy <= 1) {
-      // The king can move to any adjacent square, provided it doesn't move into check
       if (board.isEmpty(toPosition) ||
           board.getPiece(toPosition)!.color != color) {
         return true;
       }
     }
+
+    // Castling Logic (2 squares horizontal)
+    if (dy == 0 && dx == 2 && !hasMoved) {
+      // Check if it's a valid castling target
+      if (toPosition.col == 'g') {
+        // Kingside
+        return _canCastleKingside(board);
+      } else if (toPosition.col == 'c') {
+        // Queenside
+        return _canCastleQueenside(board);
+      }
+    }
+
     return false;
   }
 
@@ -67,7 +80,58 @@ class King extends ChessPiece {
       }
     }
 
+    // Add valid castling moves
+    if (!hasMoved) {
+      if (_canCastleKingside(board)) {
+        moves.add(Position(row: position.row, col: 'g'));
+      }
+      if (_canCastleQueenside(board)) {
+        moves.add(Position(row: position.row, col: 'c'));
+      }
+    }
+
     return moves; // Check validation happens separately
+  }
+
+  bool _canCastleKingside(ChessBoard board) {
+    // 1. King must not have moved (checked by caller)
+    // 2. Rook at h-file must exist and not have moved
+    int row = color == PlayerColor.white ? 1 : 8;
+    ChessPiece? rook = board.getPiece(Position(row: row, col: 'h'));
+
+    // Check Rook
+    if (rook is! Rook || rook.color != color || rook.hasMoved) {
+      return false;
+    }
+
+    // 3. Path must be clear (f and g)
+    if (!board.isEmpty(Position(row: row, col: 'f')) ||
+        !board.isEmpty(Position(row: row, col: 'g'))) {
+      return false;
+    }
+
+    return true;
+  }
+
+  bool _canCastleQueenside(ChessBoard board) {
+    // 1. King must not have moved (checked by caller)
+    // 2. Rook at a-file must exist and not have moved
+    int row = color == PlayerColor.white ? 1 : 8;
+    ChessPiece? rook = board.getPiece(Position(row: row, col: 'a'));
+
+    // Check Rook
+    if (rook is! Rook || rook.color != color || rook.hasMoved) {
+      return false;
+    }
+
+    // 3. Path must be clear (b, c, d)
+    if (!board.isEmpty(Position(row: row, col: 'b')) ||
+        !board.isEmpty(Position(row: row, col: 'c')) ||
+        !board.isEmpty(Position(row: row, col: 'd'))) {
+      return false;
+    }
+
+    return true;
   }
 
   int chessColToIndex(String col) {

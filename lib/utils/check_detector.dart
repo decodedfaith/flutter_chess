@@ -95,9 +95,34 @@ class CheckDetector {
     final legalMoves = <Position>[];
 
     for (final move in validMoves) {
-      if (!wouldLeaveKingInCheck(board, from, move, piece.color)) {
-        legalMoves.add(move);
+      // Standard Check: Does the move leave the king in check?
+      if (wouldLeaveKingInCheck(board, from, move, piece.color)) {
+        continue;
       }
+
+      // Special Castling Safety Checks (King only)
+      if (piece is King &&
+          (move.col.codeUnitAt(0) - from.col.codeUnitAt(0)).abs() == 2) {
+        // 1. King cannot be in check currently (Start)
+        if (isKingInCheck(board, piece.color)) {
+          continue;
+        }
+
+        // 2. King cannot pass through a square that is under attack (Cross)
+        int row = piece.color == PlayerColor.white ? 1 : 8;
+        String crossCol =
+            move.col == 'g' ? 'f' : 'd'; // f for Kingside, d for Queenside
+        Position crossSquare = Position(row: row, col: crossCol);
+
+        if (isSquareUnderAttack(board, crossSquare, piece.color)) {
+          continue;
+        }
+
+        // 3. Target square safety is covered by wouldLeaveKingInCheck above?
+        // Yes, wouldLeaveKingInCheck checks if the king is in check AT the destination.
+      }
+
+      legalMoves.add(move);
     }
 
     return legalMoves;
