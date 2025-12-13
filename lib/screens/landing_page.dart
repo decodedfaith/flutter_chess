@@ -58,7 +58,7 @@ class _LandingPageState extends State<LandingPage> {
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    'Flutter Chess',
+                    'Flutter ',
                     style: TextStyle(
                       fontSize: 48,
                       fontWeight: FontWeight.bold,
