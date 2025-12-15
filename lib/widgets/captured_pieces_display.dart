@@ -70,7 +70,7 @@ class CapturedPiecesDisplay extends StatelessWidget {
               const SizedBox(width: 6),
             ],
           );
-        }).toList(),
+        }),
 
         // Material advantage indicator
         if (materialValue > 0) ...[

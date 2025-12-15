@@ -41,7 +41,7 @@ class GameHUD extends StatelessWidget {
             children: [
               Text(
                 playerName,
-                style: TextStyle(
+                style: const TextStyle(
                   color: textColor,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
