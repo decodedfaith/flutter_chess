@@ -55,7 +55,8 @@ class Knight extends ChessPiece {
       int newCol = chessColToIndex(position.col) + offset[1];
       Position move = Position(row: newRow, col: indexToChessCol(newCol));
 
-      if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
+      // Correct bounds: rows 1-8, cols 0-7
+      if (newRow >= 1 && newRow <= 8 && newCol >= 0 && newCol < 8) {
         if (board.isEmpty(move) || board.getPiece(move)?.color != color) {
           moves.add(move);
         }

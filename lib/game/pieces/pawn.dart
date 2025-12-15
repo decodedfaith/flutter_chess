@@ -70,7 +70,7 @@ class Pawn extends ChessPiece {
     // Forward move
     Position forward =
         Position(row: position.row + direction, col: position.col);
-    if (board.isEmpty(forward)) {
+    if (forward.row >= 1 && forward.row <= 8 && board.isEmpty(forward)) {
       moves.add(forward);
 
       // Two-square move from start position (rank 2 for white, rank 7 for black)

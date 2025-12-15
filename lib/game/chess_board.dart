@@ -325,8 +325,8 @@ class ChessBoard {
 
   bool isValidMove(Position from, Position to, ChessPiece piece) {
     // Ensure move is within bounds
-    if (to.row < 0 ||
-        to.row >= 8 ||
+    if (to.row < 1 ||
+        to.row > 8 ||
         chessColToIndex(to.col) < 0 ||
         chessColToIndex(to.col) >= 8) {
       return false;

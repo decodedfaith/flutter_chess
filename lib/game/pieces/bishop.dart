@@ -72,7 +72,8 @@ class Bishop extends ChessPiece {
         newCol += direction[1];
         Position next = Position(row: newRow, col: indexToChessCol(newCol));
 
-        if (newRow < 0 || newRow >= 8 || newCol < 0 || newCol >= 8) break;
+        // Check bounds: Row 1-8 (inclusive), Col 0-7 (inclusive)
+        if (newRow < 1 || newRow > 8 || newCol < 0 || newCol >= 8) break;
         if (board.isEmpty(next)) {
           moves.add(next);
         } else {
