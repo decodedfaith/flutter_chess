@@ -4,6 +4,7 @@ import 'package:flutter_chess/game/chess_board.dart';
 import 'package:flutter_chess/game/chess_piece.dart';
 import 'package:flutter_chess/game/position.dart';
 import 'package:flutter_chess/models/player_color.dart';
+import 'package:flutter_chess/utils/audio_service.dart';
 import 'package:flutter_chess/utils/check_detector.dart';
 
 class ChessCubit extends Cubit<ChessState> {
@@ -49,11 +50,15 @@ class ChessCubit extends Cubit<ChessState> {
         return;
       }
 
+      // Check for capture BEFORE moving
+      final isCapture = _chessBoard.getPiece(to) != null;
+
       _chessBoard.movePiece(from, to); // Make the move
 
       // Use CheckDetector for all rule validation to verify checkmate/check/stalemate correctly
       // This ensures consistent logic especially for pawn attacks
       if (CheckDetector.isCheckmate(_chessBoard, _chessBoard.currentTurn)) {
+        AudioService().playGameOverSound();
         // Emit Checkmate state with winner
         emit(Checkmate(
           winner: _chessBoard.currentTurn == PlayerColor.white
@@ -66,6 +71,7 @@ class ChessCubit extends Cubit<ChessState> {
         ));
       } else if (CheckDetector.isKingInCheck(
           _chessBoard, _chessBoard.currentTurn)) {
+        AudioService().playCheckSound();
         // Emit CheckState if king is in check
         emit(CheckState(
           colorInCheck: _chessBoard.currentTurn,
@@ -75,6 +81,7 @@ class ChessCubit extends Cubit<ChessState> {
         ));
       } else if (CheckDetector.isStalemate(
           _chessBoard, _chessBoard.currentTurn)) {
+        AudioService().playGameOverSound();
         // Emit Stalemate state
         emit(Stalemate(
           moveCount: _chessBoard.moveCount,
@@ -83,6 +90,13 @@ class ChessCubit extends Cubit<ChessState> {
           lastMoveTo: to,
         ));
       } else {
+        // Normal Move or Capture
+        if (isCapture) {
+          AudioService().playCaptureSound();
+        } else {
+          AudioService().playMoveSound();
+        }
+
         // Emit MoveMade state
         emit(MoveMade(
           currentTurn: _chessBoard.currentTurn,

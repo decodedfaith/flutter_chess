@@ -51,7 +51,7 @@ class _LandingPageState extends State<LandingPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // App Title
-                  Icon(
+                  const Icon(
                     Icons.games,
                     size: 80,
                     color: Colors.white,
