@@ -8,6 +8,7 @@ class GameHUD extends StatelessWidget {
   final PlayerColor playerColor;
   final bool isTurn;
   final List<CapturedPiece> capturedPieces;
+  final Duration timeRemaining;
 
   const GameHUD({
     super.key,
@@ -15,7 +16,15 @@ class GameHUD extends StatelessWidget {
     required this.playerColor,
     required this.isTurn,
     required this.capturedPieces,
+    required this.timeRemaining,
   });
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$twoDigitMinutes:$twoDigitSeconds";
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,15 +57,40 @@ class GameHUD extends StatelessWidget {
                   letterSpacing: 0.5,
                 ),
               ),
-              if (isTurn)
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: isTurn
+                      ? Colors.green.withValues(alpha: 0.2)
+                      : Colors.grey.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(
+                    color: isTurn
+                        ? Colors.green.withValues(alpha: 0.5)
+                        : Colors.transparent,
+                  ),
+                ),
+                child: Text(
+                  _formatDuration(timeRemaining),
+                  style: TextStyle(
+                    color: isTurn ? Colors.white : Colors.white70,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Courier', // Monospace for timer
+                  ),
+                ),
+              ),
+              if (isTurn) ...[
+                const SizedBox(height: 2),
                 Text(
                   "Thinking...",
                   style: TextStyle(
                     color: Colors.greenAccent[400],
-                    fontSize: 12,
+                    fontSize: 10,
                     fontStyle: FontStyle.italic,
                   ),
                 ),
+              ]
             ],
           ),
           const Spacer(),

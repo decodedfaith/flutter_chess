@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chess/blocs/chess_state.dart';
 import 'package:flutter_chess/game/chess_board.dart';
@@ -11,19 +12,119 @@ class ChessCubit extends Cubit<ChessState> {
   final ChessBoard _chessBoard = ChessBoard();
   ChessPiece? selectedPiece;
   Position? selectedPosition;
+  Timer? _timer;
+  Duration whiteTime = const Duration(minutes: 10);
+  Duration blackTime = const Duration(minutes: 10);
 
   ChessCubit() : super(ChessInitial(board: ChessBoard())) {
     initializeBoard(); // Initialize board on creation
   }
 
-  void initializeBoard() {
+  void initializeBoard({Duration timeLimit = const Duration(minutes: 10)}) {
     _chessBoard.initializeBoard();
-    emit(ChessInitial(board: _chessBoard));
-    // Force a second emit to ensure listeners (like BoardComponent) catch it
-    // BlocListenable only triggers on changes, not initial state
+    whiteTime = timeLimit;
+    blackTime = timeLimit;
+    _timer?.cancel();
+
+    emit(ChessInitial(
+      board: _chessBoard,
+      whiteTimeRemaining: whiteTime,
+      blackTimeRemaining: blackTime,
+    ));
+
+    // Force a second emit
     Future.delayed(const Duration(milliseconds: 10), () {
-      emit(ChessInitial(board: _chessBoard));
+      if (isClosed) return;
+      emit(ChessInitial(
+        board: _chessBoard,
+        whiteTimeRemaining: whiteTime,
+        blackTimeRemaining: blackTime,
+      ));
+      _startTimer(); // Start the clock immediately
     });
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_chessBoard.currentTurn == PlayerColor.white) {
+        whiteTime -= const Duration(seconds: 1);
+        if (whiteTime.inSeconds <= 0) {
+          _handleTimeout(PlayerColor.white);
+        }
+      } else {
+        blackTime -= const Duration(seconds: 1);
+        if (blackTime.inSeconds <= 0) {
+          _handleTimeout(PlayerColor.black);
+        }
+      }
+
+      // Emit time update (preserving other state if possible, or re-emitting current state class)
+      // Since State classes are distinct, we need to know WHICH state to emit.
+      // Easiest is to emit MoveMade/CheckState/GameInProgress with updated times.
+      // BUT, we don't want to re-trigger sounds or "last move" animations if unnecessary.
+      // ChessState holds everything.
+
+      if (state is! Checkmate && state is! Stalemate && state is! Resignation) {
+        emit(_copyStateWithTime(state));
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  void _handleTimeout(PlayerColor loser) {
+    _timer?.cancel();
+    AudioService().playGameOverSound();
+    emit(Checkmate(
+      // Reusing Checkmate for game over? Or create Timeout state? Checkmate implies winner.
+      winner:
+          loser == PlayerColor.white ? PlayerColor.black : PlayerColor.white,
+      moveCount: _chessBoard.moveCount,
+      board: _chessBoard,
+      lastMoveFrom: state.lastMoveFrom,
+      lastMoveTo: state.lastMoveTo,
+      whiteTimeRemaining: whiteTime,
+      blackTimeRemaining: blackTime,
+    ));
+  }
+
+  ChessState _copyStateWithTime(ChessState currentState) {
+    // Helper to clone state with new time
+    if (currentState is CheckState) {
+      return CheckState(
+        colorInCheck: currentState.colorInCheck,
+        board: currentState.board,
+        lastMoveFrom: currentState.lastMoveFrom,
+        lastMoveTo: currentState.lastMoveTo,
+        whiteTimeRemaining: whiteTime,
+        blackTimeRemaining: blackTime,
+      );
+    } else if (currentState is MoveMade) {
+      return MoveMade(
+        currentTurn: currentState.currentTurn,
+        board: currentState.board,
+        lastMoveFrom: currentState.lastMoveFrom,
+        lastMoveTo: currentState.lastMoveTo,
+        whiteTimeRemaining: whiteTime,
+        blackTimeRemaining: blackTime,
+      );
+    } else if (currentState is ChessInitial) {
+      // Should we transition to GameInProgress? Valid match has started if timer is ticking.
+      return GameInProgress(
+        board: currentState.board,
+        whiteTimeRemaining: whiteTime,
+        blackTimeRemaining: blackTime,
+      );
+    }
+
+    return GameInProgress(
+      board: currentState.board,
+      lastMoveFrom: currentState.lastMoveFrom,
+      lastMoveTo: currentState.lastMoveTo,
+      whiteTimeRemaining: whiteTime,
+      blackTimeRemaining: blackTime,
+    );
   }
 
   void makeMove(Position from, Position to) {
@@ -58,6 +159,7 @@ class ChessCubit extends Cubit<ChessState> {
       // Use CheckDetector for all rule validation to verify checkmate/check/stalemate correctly
       // This ensures consistent logic especially for pawn attacks
       if (CheckDetector.isCheckmate(_chessBoard, _chessBoard.currentTurn)) {
+        _timer?.cancel(); // Stop timer on valid end game
         AudioService().playGameOverSound();
         // Emit Checkmate state with winner
         emit(Checkmate(
@@ -68,19 +170,25 @@ class ChessCubit extends Cubit<ChessState> {
           board: _chessBoard,
           lastMoveFrom: from,
           lastMoveTo: to,
+          whiteTimeRemaining: whiteTime,
+          blackTimeRemaining: blackTime,
         ));
       } else if (CheckDetector.isKingInCheck(
           _chessBoard, _chessBoard.currentTurn)) {
         AudioService().playCheckSound();
+        _startTimer(); // Ensure timer is running
         // Emit CheckState if king is in check
         emit(CheckState(
           colorInCheck: _chessBoard.currentTurn,
           board: _chessBoard,
           lastMoveFrom: from,
           lastMoveTo: to,
+          whiteTimeRemaining: whiteTime,
+          blackTimeRemaining: blackTime,
         ));
       } else if (CheckDetector.isStalemate(
           _chessBoard, _chessBoard.currentTurn)) {
+        _timer?.cancel(); // Stop timer
         AudioService().playGameOverSound();
         // Emit Stalemate state
         emit(Stalemate(
@@ -88,6 +196,8 @@ class ChessCubit extends Cubit<ChessState> {
           board: _chessBoard,
           lastMoveFrom: from,
           lastMoveTo: to,
+          whiteTimeRemaining: whiteTime,
+          blackTimeRemaining: blackTime,
         ));
       } else {
         // Normal Move or Capture
@@ -97,12 +207,16 @@ class ChessCubit extends Cubit<ChessState> {
           AudioService().playMoveSound();
         }
 
+        _startTimer(); // Ensure timer is running
+
         // Emit MoveMade state
         emit(MoveMade(
           currentTurn: _chessBoard.currentTurn,
           board: _chessBoard,
           lastMoveFrom: from,
           lastMoveTo: to,
+          whiteTimeRemaining: whiteTime,
+          blackTimeRemaining: blackTime,
         ));
       }
     } catch (e) {
@@ -116,16 +230,21 @@ class ChessCubit extends Cubit<ChessState> {
         // For now, null is acceptable or we can try access current state.
         lastMoveFrom: state.lastMoveFrom,
         lastMoveTo: state.lastMoveTo,
+        whiteTimeRemaining: whiteTime,
+        blackTimeRemaining: blackTime,
       ));
     }
   }
 
   void resign() {
+    _timer?.cancel();
     // Current player resigns, opponent wins
     emit(Resignation(
       resignedPlayer: _chessBoard.currentTurn,
       moveCount: _chessBoard.moveCount,
       board: _chessBoard,
+      whiteTimeRemaining: whiteTime,
+      blackTimeRemaining: blackTime,
     ));
   }
 
@@ -148,5 +267,11 @@ class ChessCubit extends Cubit<ChessState> {
 
   void resetGame() {
     initializeBoard(); // Reinitialize board
+  }
+
+  @override
+  Future<void> close() {
+    _timer?.cancel();
+    return super.close();
   }
 }

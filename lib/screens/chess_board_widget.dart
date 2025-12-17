@@ -60,6 +60,7 @@ class ChessBoardWidget extends StatelessWidget {
                       playerColor: PlayerColor.black,
                       isTurn: board.currentTurn == PlayerColor.black,
                       capturedPieces: board.capturedWhitePieces,
+                      timeRemaining: state.blackTimeRemaining,
                     ),
 
                     const Spacer(),
@@ -90,6 +91,7 @@ class ChessBoardWidget extends StatelessWidget {
                       playerColor: PlayerColor.white,
                       isTurn: board.currentTurn == PlayerColor.white,
                       capturedPieces: board.capturedBlackPieces,
+                      timeRemaining: state.whiteTimeRemaining,
                     ),
                   ],
                 ),

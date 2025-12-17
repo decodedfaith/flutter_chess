@@ -283,7 +283,8 @@ class _LandingPageState extends State<LandingPage> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => BlocProvider(
-          create: (context) => ChessCubit(),
+          create: (context) => ChessCubit()
+            ..initializeBoard(timeLimit: _parseTime(selectedTime)),
           child: ChessScreen(
             whitePlayerName: player1Controller.text.trim().isEmpty
                 ? 'Player 1'
@@ -291,10 +292,30 @@ class _LandingPageState extends State<LandingPage> {
             blackPlayerName: player2Controller.text.trim().isEmpty
                 ? (selectedMode == 'vs Bot' ? 'Bot' : 'Player 2')
                 : player2Controller.text.trim(),
+            timeLimit: _parseTime(selectedTime),
           ),
         ),
       ),
     );
+  }
+
+  Duration _parseTime(String timeString) {
+    switch (timeString) {
+      case '1 min':
+        return const Duration(minutes: 1);
+      case '3 min':
+        return const Duration(minutes: 3);
+      case '5 min':
+        return const Duration(minutes: 5);
+      case '10 min':
+        return const Duration(minutes: 10);
+      case '15 min':
+        return const Duration(minutes: 15);
+      case 'No Limit':
+        return const Duration(hours: 99); // Practically infinite
+      default:
+        return const Duration(minutes: 10);
+    }
   }
 
   @override

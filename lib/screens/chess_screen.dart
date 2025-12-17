@@ -14,7 +14,10 @@ class ChessScreen extends StatelessWidget {
     super.key,
     this.whitePlayerName = 'White Player',
     this.blackPlayerName = 'Black Player',
+    this.timeLimit = const Duration(minutes: 10),
   });
+
+  final Duration timeLimit;
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +55,7 @@ class ChessScreen extends StatelessWidget {
         moveCount: state.board.moveCount,
         onNewGame: () {
           Navigator.of(dialogContext).pop();
-          cubit.initializeBoard();
+          cubit.initializeBoard(timeLimit: timeLimit);
         },
         onMainMenu: () {
           Navigator.of(dialogContext).pop();
