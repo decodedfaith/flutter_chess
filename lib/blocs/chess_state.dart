@@ -6,16 +6,24 @@ abstract class ChessState {
   final ChessBoard board;
   final Position? lastMoveFrom;
   final Position? lastMoveTo;
+  final Duration whiteTimeRemaining;
+  final Duration blackTimeRemaining;
 
   const ChessState({
     required this.board,
     this.lastMoveFrom,
     this.lastMoveTo,
+    this.whiteTimeRemaining = const Duration(minutes: 10),
+    this.blackTimeRemaining = const Duration(minutes: 10),
   });
 }
 
 class ChessInitial extends ChessState {
-  const ChessInitial({required super.board});
+  const ChessInitial({
+    required super.board,
+    super.whiteTimeRemaining,
+    super.blackTimeRemaining,
+  });
 }
 
 class GameInProgress extends ChessState {
@@ -23,6 +31,8 @@ class GameInProgress extends ChessState {
     required super.board,
     super.lastMoveFrom,
     super.lastMoveTo,
+    super.whiteTimeRemaining,
+    super.blackTimeRemaining,
   });
 }
 
@@ -34,6 +44,8 @@ class MoveMade extends GameInProgress {
     required super.board,
     super.lastMoveFrom,
     super.lastMoveTo,
+    super.whiteTimeRemaining,
+    super.blackTimeRemaining,
   });
 }
 
@@ -46,6 +58,8 @@ class CheckState extends GameInProgress {
     required super.board,
     super.lastMoveFrom,
     super.lastMoveTo,
+    super.whiteTimeRemaining,
+    super.blackTimeRemaining,
   });
 }
 
@@ -59,6 +73,8 @@ class Checkmate extends ChessState {
     required super.board,
     super.lastMoveFrom,
     super.lastMoveTo,
+    super.whiteTimeRemaining,
+    super.blackTimeRemaining,
   });
 }
 
@@ -70,6 +86,8 @@ class Stalemate extends ChessState {
     required super.board,
     super.lastMoveFrom,
     super.lastMoveTo,
+    super.whiteTimeRemaining,
+    super.blackTimeRemaining,
   });
 }
 
@@ -83,6 +101,8 @@ class Resignation extends ChessState {
     required super.board,
     super.lastMoveFrom,
     super.lastMoveTo,
+    super.whiteTimeRemaining,
+    super.blackTimeRemaining,
   });
 }
 
@@ -94,5 +114,7 @@ class ChessError extends ChessState {
     required super.board,
     super.lastMoveFrom,
     super.lastMoveTo,
+    super.whiteTimeRemaining,
+    super.blackTimeRemaining,
   });
 }
