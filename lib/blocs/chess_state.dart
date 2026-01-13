@@ -118,3 +118,16 @@ class ChessError extends ChessState {
     super.blackTimeRemaining,
   });
 }
+
+class AwaitingPromotion extends GameInProgress {
+  final Position promotionFrom;
+  final Position promotionTo;
+
+  const AwaitingPromotion({
+    required this.promotionFrom,
+    required this.promotionTo,
+    required super.board,
+    super.whiteTimeRemaining,
+    super.blackTimeRemaining,
+  });
+}

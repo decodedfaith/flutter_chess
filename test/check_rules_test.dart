@@ -60,5 +60,74 @@ void main() {
       expect(legalMoves.contains(Position(col: 'd', row: 2)), isFalse);
       expect(legalMoves.contains(Position(col: 'e', row: 3)), isTrue);
     });
+
+    test('Cannot castle while in check', () {
+      final board = ChessBoard();
+      board.initializeBoard();
+      board.board.forEach((col, rows) =>
+          rows.forEach((row, _) => board.board[col]![row] = null));
+
+      // White King at e1, Rook at h1
+      final whiteKing = King(PlayerColor.white, Position(col: 'e', row: 1));
+      final whiteRook = Rook(PlayerColor.white, Position(col: 'h', row: 1));
+      board.board['e']![1] = whiteKing;
+      board.board['h']![1] = whiteRook;
+
+      // Black Rook at e8 (Attacking e1)
+      final blackRook = Rook(PlayerColor.black, Position(col: 'e', row: 8));
+      board.board['e']![8] = blackRook;
+
+      final legalMoves = CheckDetector.getLegalMoves(
+          board, whiteKing, Position(col: 'e', row: 1));
+
+      // Castling move (g1) should NOT be present
+      expect(legalMoves.contains(Position(col: 'g', row: 1)), isFalse);
+    });
+
+    test('Cannot castle through check (passing through f1)', () {
+      final board = ChessBoard();
+      board.initializeBoard();
+      board.board.forEach((col, rows) =>
+          rows.forEach((row, _) => board.board[col]![row] = null));
+
+      // White King at e1, Rook at h1
+      final whiteKing = King(PlayerColor.white, Position(col: 'e', row: 1));
+      final whiteRook = Rook(PlayerColor.white, Position(col: 'h', row: 1));
+      board.board['e']![1] = whiteKing;
+      board.board['h']![1] = whiteRook;
+
+      // Black Rook at f8 (Attacking f1)
+      final blackRook = Rook(PlayerColor.black, Position(col: 'f', row: 8));
+      board.board['f']![8] = blackRook;
+
+      final legalMoves = CheckDetector.getLegalMoves(
+          board, whiteKing, Position(col: 'e', row: 1));
+
+      // Castling move (g1) should NOT be present because it passes through f1
+      expect(legalMoves.contains(Position(col: 'g', row: 1)), isFalse);
+    });
+
+    test('Cannot castle into check (landing on g1)', () {
+      final board = ChessBoard();
+      board.initializeBoard();
+      board.board.forEach((col, rows) =>
+          rows.forEach((row, _) => board.board[col]![row] = null));
+
+      // White King at e1, Rook at h1
+      final whiteKing = King(PlayerColor.white, Position(col: 'e', row: 1));
+      final whiteRook = Rook(PlayerColor.white, Position(col: 'h', row: 1));
+      board.board['e']![1] = whiteKing;
+      board.board['h']![1] = whiteRook;
+
+      // Black Rook at g8 (Attacking g1)
+      final blackRook = Rook(PlayerColor.black, Position(col: 'g', row: 8));
+      board.board['g']![8] = blackRook;
+
+      final legalMoves = CheckDetector.getLegalMoves(
+          board, whiteKing, Position(col: 'e', row: 1));
+
+      // Castling move (g1) should NOT be present because it lands in check
+      expect(legalMoves.contains(Position(col: 'g', row: 1)), isFalse);
+    });
   });
 }

@@ -83,7 +83,7 @@ class ChessBoard {
     }
   }
 
-  void movePiece(Position from, Position to) {
+  void movePiece(Position from, Position to, {String? promotionPieceType}) {
     try {
       // Retrieve the piece at the 'from' position
       ChessPiece? piece = board[from.col]![from.row];
@@ -168,11 +168,19 @@ class ChessBoard {
           board[to.col]![to.row] = piece.copyWith(position: to, hasMoved: true);
         }
 
-        // Pawn promotion: auto-promote to Queen when reaching end rank
         if (piece is Pawn) {
           if ((piece.color == PlayerColor.white && to.row == 8) ||
               (piece.color == PlayerColor.black && to.row == 1)) {
-            board[to.col]![to.row] = Queen(piece.color, to, id: piece.id);
+            // Use provided promotion type or default to Queen if not specified (for tests/legacy)
+            if (promotionPieceType == 'rook') {
+              board[to.col]![to.row] = Rook(piece.color, to, id: piece.id);
+            } else if (promotionPieceType == 'knight') {
+              board[to.col]![to.row] = Knight(piece.color, to, id: piece.id);
+            } else if (promotionPieceType == 'bishop') {
+              board[to.col]![to.row] = Bishop(piece.color, to, id: piece.id);
+            } else {
+              board[to.col]![to.row] = Queen(piece.color, to, id: piece.id);
+            }
           }
 
           // Set en passant target after 2-square pawn move
