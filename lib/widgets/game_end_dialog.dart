@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chess/blocs/chess_state.dart';
 import 'package:flutter_chess/models/player_color.dart';
 
-/// Endgame dialog shown when game ends (checkmate, stalemate, resignation)
+/// Endgame dialog shown when game ends (checkmate, stalemate, resignation, timeout)
 class GameEndDialog extends StatelessWidget {
   final PlayerColor? winner; // null for draw
-  final String reason; // 'checkmate', 'stalemate', 'resignation'
+  final GameEndReason reason;
   final int moveCount;
   final VoidCallback onNewGame;
   final VoidCallback onMainMenu;
+  final VoidCallback onReview;
 
   const GameEndDialog({
     super.key,
@@ -16,26 +18,29 @@ class GameEndDialog extends StatelessWidget {
     required this.moveCount,
     required this.onNewGame,
     required this.onMainMenu,
+    required this.onReview,
   });
 
   String get _title {
     if (winner == null) {
-      return reason == 'stalemate' ? 'Stalemate!' : 'Draw!';
+      return reason == GameEndReason.stalemate ? 'Stalemate!' : 'Draw!';
     }
     return '${winner == PlayerColor.white ? 'White' : 'Black'} Wins!';
   }
 
   String get _subtitle {
     if (winner == null) {
-      return reason == 'stalemate'
+      return reason == GameEndReason.stalemate
           ? 'No legal moves available'
           : 'Game ended in a draw';
     }
     switch (reason) {
-      case 'checkmate':
+      case GameEndReason.checkmate:
         return 'by Checkmate';
-      case 'resignation':
+      case GameEndReason.resignation:
         return 'by Resignation';
+      case GameEndReason.timeout:
+        return 'on Time';
       default:
         return '';
     }
@@ -116,13 +121,30 @@ class GameEndDialog extends StatelessWidget {
                   _StatItem(
                     icon: Icons.timer_outlined,
                     label: 'Type',
-                    value: reason.toUpperCase(),
+                    value: reason.name.toUpperCase(),
                   ),
                 ],
               ),
             ),
 
             const SizedBox(height: 24),
+
+            // Review Piece Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: onReview,
+                icon: const Icon(Icons.analytics_outlined),
+                label: const Text('Review Game'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: Colors.purple,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
 
             // Action Buttons
             Row(
@@ -134,7 +156,7 @@ class GameEndDialog extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       side: BorderSide(color: _primaryColor),
                     ),
-                    child: const Text('Main Menu'),
+                    child: const Text('Menu'),
                   ),
                 ),
                 const SizedBox(width: 12),

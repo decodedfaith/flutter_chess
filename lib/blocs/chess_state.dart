@@ -8,6 +8,7 @@ abstract class ChessState {
   final Position? lastMoveTo;
   final Duration whiteTimeRemaining;
   final Duration blackTimeRemaining;
+  final bool isReviewMode;
 
   const ChessState({
     required this.board,
@@ -15,6 +16,7 @@ abstract class ChessState {
     this.lastMoveTo,
     this.whiteTimeRemaining = const Duration(minutes: 10),
     this.blackTimeRemaining = const Duration(minutes: 10),
+    this.isReviewMode = false,
   });
 }
 
@@ -33,6 +35,7 @@ class GameInProgress extends ChessState {
     super.lastMoveTo,
     super.whiteTimeRemaining,
     super.blackTimeRemaining,
+    super.isReviewMode,
   });
 }
 
@@ -46,6 +49,7 @@ class MoveMade extends GameInProgress {
     super.lastMoveTo,
     super.whiteTimeRemaining,
     super.blackTimeRemaining,
+    super.isReviewMode,
   });
 }
 
@@ -60,50 +64,57 @@ class CheckState extends GameInProgress {
     super.lastMoveTo,
     super.whiteTimeRemaining,
     super.blackTimeRemaining,
+    super.isReviewMode,
   });
 }
 
-class Checkmate extends ChessState {
-  final PlayerColor winner;
+enum GameEndReason {
+  checkmate,
+  stalemate,
+  resignation,
+  timeout,
+}
+
+class GameEnded extends ChessState {
+  final PlayerColor? winner;
+  final GameEndReason reason;
   final int moveCount;
 
+  const GameEnded({
+    this.winner,
+    required this.reason,
+    required this.moveCount,
+    required super.board,
+    super.lastMoveFrom,
+    super.lastMoveTo,
+    super.whiteTimeRemaining,
+    super.blackTimeRemaining,
+    super.isReviewMode,
+  });
+}
+
+// Deprecated: Use GameEnded instead. Keeping for backward compatibility temporarily.
+class Checkmate extends GameEnded {
   const Checkmate({
-    required this.winner,
-    required this.moveCount,
+    required super.winner,
+    required super.moveCount,
     required super.board,
     super.lastMoveFrom,
     super.lastMoveTo,
     super.whiteTimeRemaining,
     super.blackTimeRemaining,
-  });
+  }) : super(reason: GameEndReason.checkmate);
 }
 
-class Stalemate extends ChessState {
-  final int moveCount;
-
+class Stalemate extends GameEnded {
   const Stalemate({
-    required this.moveCount,
+    required super.moveCount,
     required super.board,
     super.lastMoveFrom,
     super.lastMoveTo,
     super.whiteTimeRemaining,
     super.blackTimeRemaining,
-  });
-}
-
-class Resignation extends ChessState {
-  final PlayerColor resignedPlayer;
-  final int moveCount;
-
-  const Resignation({
-    required this.resignedPlayer,
-    required this.moveCount,
-    required super.board,
-    super.lastMoveFrom,
-    super.lastMoveTo,
-    super.whiteTimeRemaining,
-    super.blackTimeRemaining,
-  });
+  }) : super(reason: GameEndReason.stalemate);
 }
 
 class ChessError extends ChessState {
@@ -130,4 +141,17 @@ class AwaitingPromotion extends GameInProgress {
     super.whiteTimeRemaining,
     super.blackTimeRemaining,
   });
+}
+
+class ReviewingGame extends ChessState {
+  final int currentMoveIndex;
+
+  const ReviewingGame({
+    required this.currentMoveIndex,
+    required super.board,
+    super.lastMoveFrom,
+    super.lastMoveTo,
+    super.whiteTimeRemaining,
+    super.blackTimeRemaining,
+  }) : super(isReviewMode: true);
 }
