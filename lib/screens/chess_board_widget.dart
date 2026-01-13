@@ -54,13 +54,22 @@ class ChessBoardWidget extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Top HUD (Black)
+                    // Top HUD (Black by default, White if flipped)
                     GameHUD(
-                      playerName: blackPlayerName,
-                      playerColor: PlayerColor.black,
-                      isTurn: board.currentTurn == PlayerColor.black,
-                      capturedPieces: board.capturedWhitePieces,
-                      timeRemaining: state.blackTimeRemaining,
+                      playerName:
+                          state.isFlipped ? whitePlayerName : blackPlayerName,
+                      playerColor: state.isFlipped
+                          ? PlayerColor.white
+                          : PlayerColor.black,
+                      isTurn: state.isFlipped
+                          ? board.currentTurn == PlayerColor.white
+                          : board.currentTurn == PlayerColor.black,
+                      capturedPieces: state.isFlipped
+                          ? board.capturedBlackPieces
+                          : board.capturedWhitePieces,
+                      timeRemaining: state.isFlipped
+                          ? state.whiteTimeRemaining
+                          : state.blackTimeRemaining,
                     ),
 
                     const Spacer(),
@@ -85,13 +94,22 @@ class ChessBoardWidget extends StatelessWidget {
 
                     const Spacer(),
 
-                    // Bottom HUD (White)
+                    // Bottom HUD (White by default, Black if flipped)
                     GameHUD(
-                      playerName: whitePlayerName, // Pass real name
-                      playerColor: PlayerColor.white,
-                      isTurn: board.currentTurn == PlayerColor.white,
-                      capturedPieces: board.capturedBlackPieces,
-                      timeRemaining: state.whiteTimeRemaining,
+                      playerName:
+                          state.isFlipped ? blackPlayerName : whitePlayerName,
+                      playerColor: state.isFlipped
+                          ? PlayerColor.black
+                          : PlayerColor.white,
+                      isTurn: state.isFlipped
+                          ? board.currentTurn == PlayerColor.black
+                          : board.currentTurn == PlayerColor.white,
+                      capturedPieces: state.isFlipped
+                          ? board.capturedWhitePieces
+                          : board.capturedBlackPieces,
+                      timeRemaining: state.isFlipped
+                          ? state.blackTimeRemaining
+                          : state.whiteTimeRemaining,
                     ),
                   ],
                 ),

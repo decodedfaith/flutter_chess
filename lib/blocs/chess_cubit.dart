@@ -47,6 +47,10 @@ class ChessCubit extends Cubit<ChessState> {
     });
   }
 
+  void toggleFlip() {
+    emit(_copyWith(state, isFlipped: !state.isFlipped));
+  }
+
   void _startTimer() {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -127,6 +131,67 @@ class ChessCubit extends Cubit<ChessState> {
       lastMoveTo: currentState.lastMoveTo,
       whiteTimeRemaining: whiteTime,
       blackTimeRemaining: blackTime,
+    );
+  }
+
+  ChessState _copyWith(ChessState currentState, {bool? isFlipped}) {
+    final flipped = isFlipped ?? currentState.isFlipped;
+
+    if (currentState is GameEnded) {
+      return GameEnded(
+        winner: currentState.winner,
+        reason: currentState.reason,
+        moveCount: currentState.moveCount,
+        board: currentState.board,
+        lastMoveFrom: currentState.lastMoveFrom,
+        lastMoveTo: currentState.lastMoveTo,
+        whiteTimeRemaining: currentState.whiteTimeRemaining,
+        blackTimeRemaining: currentState.blackTimeRemaining,
+        isReviewMode: currentState.isReviewMode,
+        isFlipped: flipped,
+      );
+    } else if (currentState is ReviewingGame) {
+      return ReviewingGame(
+        currentMoveIndex: currentState.currentMoveIndex,
+        board: currentState.board,
+        lastMoveFrom: currentState.lastMoveFrom,
+        lastMoveTo: currentState.lastMoveTo,
+        whiteTimeRemaining: currentState.whiteTimeRemaining,
+        blackTimeRemaining: currentState.blackTimeRemaining,
+        isFlipped: flipped,
+      );
+    } else if (currentState is CheckState) {
+      return CheckState(
+        colorInCheck: currentState.colorInCheck,
+        board: currentState.board,
+        lastMoveFrom: currentState.lastMoveFrom,
+        lastMoveTo: currentState.lastMoveTo,
+        whiteTimeRemaining: currentState.whiteTimeRemaining,
+        blackTimeRemaining: currentState.blackTimeRemaining,
+        isReviewMode: currentState.isReviewMode,
+        isFlipped: flipped,
+      );
+    } else if (currentState is MoveMade) {
+      return MoveMade(
+        currentTurn: currentState.currentTurn,
+        board: currentState.board,
+        lastMoveFrom: currentState.lastMoveFrom,
+        lastMoveTo: currentState.lastMoveTo,
+        whiteTimeRemaining: currentState.whiteTimeRemaining,
+        blackTimeRemaining: currentState.blackTimeRemaining,
+        isReviewMode: currentState.isReviewMode,
+        isFlipped: flipped,
+      );
+    }
+
+    return GameInProgress(
+      board: currentState.board,
+      lastMoveFrom: currentState.lastMoveFrom,
+      lastMoveTo: currentState.lastMoveTo,
+      whiteTimeRemaining: whiteTime,
+      blackTimeRemaining: blackTime,
+      isReviewMode: currentState.isReviewMode,
+      isFlipped: flipped,
     );
   }
 

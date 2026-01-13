@@ -28,6 +28,13 @@ class ChessScreen extends StatelessWidget {
         backgroundColor: Colors.purple,
         title: _buildAppBarTitle(),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.flip_camera_android),
+            onPressed: () => context.read<ChessCubit>().toggleFlip(),
+            tooltip: 'Flip Board',
+          ),
+        ],
       ),
       body: BlocListener<ChessCubit, ChessState>(
         listener: (context, state) {
