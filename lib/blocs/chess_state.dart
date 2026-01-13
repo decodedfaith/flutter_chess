@@ -9,6 +9,7 @@ abstract class ChessState {
   final Duration whiteTimeRemaining;
   final Duration blackTimeRemaining;
   final bool isReviewMode;
+  final bool isFlipped;
 
   const ChessState({
     required this.board,
@@ -17,6 +18,7 @@ abstract class ChessState {
     this.whiteTimeRemaining = const Duration(minutes: 10),
     this.blackTimeRemaining = const Duration(minutes: 10),
     this.isReviewMode = false,
+    this.isFlipped = false,
   });
 }
 
@@ -36,6 +38,7 @@ class GameInProgress extends ChessState {
     super.whiteTimeRemaining,
     super.blackTimeRemaining,
     super.isReviewMode,
+    super.isFlipped,
   });
 }
 
@@ -50,6 +53,7 @@ class MoveMade extends GameInProgress {
     super.whiteTimeRemaining,
     super.blackTimeRemaining,
     super.isReviewMode,
+    super.isFlipped,
   });
 }
 
@@ -65,6 +69,7 @@ class CheckState extends GameInProgress {
     super.whiteTimeRemaining,
     super.blackTimeRemaining,
     super.isReviewMode,
+    super.isFlipped,
   });
 }
 
@@ -90,6 +95,7 @@ class GameEnded extends ChessState {
     super.whiteTimeRemaining,
     super.blackTimeRemaining,
     super.isReviewMode,
+    super.isFlipped,
   });
 }
 
@@ -103,6 +109,7 @@ class Checkmate extends GameEnded {
     super.lastMoveTo,
     super.whiteTimeRemaining,
     super.blackTimeRemaining,
+    super.isFlipped,
   }) : super(reason: GameEndReason.checkmate);
 }
 
@@ -114,6 +121,7 @@ class Stalemate extends GameEnded {
     super.lastMoveTo,
     super.whiteTimeRemaining,
     super.blackTimeRemaining,
+    super.isFlipped,
   }) : super(reason: GameEndReason.stalemate);
 }
 
@@ -127,6 +135,7 @@ class ChessError extends ChessState {
     super.lastMoveTo,
     super.whiteTimeRemaining,
     super.blackTimeRemaining,
+    super.isFlipped,
   });
 }
 
@@ -140,6 +149,7 @@ class AwaitingPromotion extends GameInProgress {
     required super.board,
     super.whiteTimeRemaining,
     super.blackTimeRemaining,
+    super.isFlipped,
   });
 }
 
@@ -153,5 +163,6 @@ class ReviewingGame extends ChessState {
     super.lastMoveTo,
     super.whiteTimeRemaining,
     super.blackTimeRemaining,
+    super.isFlipped,
   }) : super(isReviewMode: true);
 }

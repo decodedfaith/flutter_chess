@@ -50,6 +50,8 @@ class GameHUD extends StatelessWidget {
             children: [
               Text(
                 playerName,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
                 style: const TextStyle(
                   color: textColor,
                   fontWeight: FontWeight.bold,
@@ -58,39 +60,50 @@ class GameHUD extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: isTurn
-                      ? Colors.green.withValues(alpha: 0.2)
-                      : Colors.grey.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(
-                    color: isTurn
-                        ? Colors.green.withValues(alpha: 0.5)
-                        : Colors.transparent,
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isTurn
+                          ? Colors.green.withValues(alpha: 0.2)
+                          : Colors.grey.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: isTurn
+                            ? Colors.green.withValues(alpha: 0.5)
+                            : Colors.transparent,
+                      ),
+                    ),
+                    child: Text(
+                      _formatDuration(timeRemaining),
+                      style: TextStyle(
+                        color: isTurn ? Colors.white : Colors.white70,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Courier', // Monospace for timer
+                      ),
+                    ),
                   ),
-                ),
-                child: Text(
-                  _formatDuration(timeRemaining),
-                  style: TextStyle(
-                    color: isTurn ? Colors.white : Colors.white70,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Courier', // Monospace for timer
+                  const SizedBox(width: 8),
+                  // Reserve space for "Thinking..." to prevent layout shift
+                  SizedBox(
+                    height: 14,
+                    child: Opacity(
+                      opacity: isTurn ? 1.0 : 0.0,
+                      child: Text(
+                        "Thinking...",
+                        style: TextStyle(
+                          color: Colors.greenAccent[400],
+                          fontSize: 10,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-              if (isTurn) ...[
-                const SizedBox(height: 2),
-                Text(
-                  "Thinking...",
-                  style: TextStyle(
-                    color: Colors.greenAccent[400],
-                    fontSize: 10,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ]
             ],
           ),
           const Spacer(),

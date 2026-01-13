@@ -49,6 +49,7 @@ class FlutterChessBoard extends StatelessWidget {
   Widget _buildBoardBackground(double squareSize, ChessCubit cubit) {
     return BlocBuilder<ChessCubit, ChessState>(
       builder: (context, state) {
+        final isFlipped = state.isFlipped;
         return GridView.builder(
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -60,9 +61,13 @@ class FlutterChessBoard extends StatelessWidget {
             final col = index % 8;
             final isLight = (row + col) % 2 == 0;
 
-            // Visual row 0 = Rank 8, Visual row 7 = Rank 1
-            final logicalRow = 8 - row;
-            final logicalCol = String.fromCharCode('a'.codeUnitAt(0) + col);
+            // Visual row 0 = Rank 8 (White view) or Rank 1 (Black view/Flipped)
+            final logicalRow = isFlipped ? (row + 1) : (8 - row);
+            // Visual col 0 = File 'a' (White view) or File 'h' (Black view/Flipped)
+            final logicalCol = isFlipped
+                ? String.fromCharCode('h'.codeUnitAt(0) - col)
+                : String.fromCharCode('a'.codeUnitAt(0) + col);
+
             final position = Position(row: logicalRow, col: logicalCol);
 
             // Check last move
@@ -116,7 +121,7 @@ class FlutterChessBoard extends StatelessWidget {
                           )
                         : null,
                   ),
-                  // Rank Label (1-8) on the left edge
+                  // Rank Label (1-8)
                   if (col == 0)
                     Positioned(
                       top: 2,
@@ -127,12 +132,12 @@ class FlutterChessBoard extends StatelessWidget {
                           color: isLight
                               ? const Color(0xFF769656)
                               : const Color(0xFFEEEED2),
-                          fontSize: 12,
+                          fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                  // File Label (a-h) on the bottom edge
+                  // File Label (a-h)
                   if (row == 7)
                     Positioned(
                       bottom: 2,
@@ -143,7 +148,7 @@ class FlutterChessBoard extends StatelessWidget {
                           color: isLight
                               ? const Color(0xFF769656)
                               : const Color(0xFFEEEED2),
-                          fontSize: 12,
+                          fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -160,6 +165,7 @@ class FlutterChessBoard extends StatelessWidget {
   List<Widget> _buildPieces(
       ChessBoard board, double squareSize, ChessCubit cubit) {
     final pieces = <Widget>[];
+    final isFlipped = cubit.state.isFlipped;
 
     for (var row = 1; row <= 8; row++) {
       for (var colIndex = 0; colIndex < 8; colIndex++) {
@@ -169,7 +175,7 @@ class FlutterChessBoard extends StatelessWidget {
 
         if (piece != null) {
           pieces.add(
-            _buildAnimatedPiece(piece, position, squareSize, cubit),
+            _buildAnimatedPiece(piece, position, squareSize, cubit, isFlipped),
           );
         }
       }
@@ -183,14 +189,16 @@ class FlutterChessBoard extends StatelessWidget {
     Position position,
     double squareSize,
     ChessCubit cubit,
+    bool isFlipped,
   ) {
     // Convert logical position to pixel coordinates
-    // Col 'a' = 0, 'h' = 7
     final colIndex = position.col.codeUnitAt(0) - 'a'.codeUnitAt(0);
-    // Row 8 = top (y=0), Row 1 = bottom (y=7*squareSize)
-    final visualRow = 8 - position.row;
 
-    final left = colIndex * squareSize;
+    // If flipped, reverse col and row visual positions
+    final visualCol = isFlipped ? (7 - colIndex) : colIndex;
+    final visualRow = isFlipped ? (position.row - 1) : (8 - position.row);
+
+    final left = visualCol * squareSize;
     final top = visualRow * squareSize;
 
     return AnimatedPositioned(
