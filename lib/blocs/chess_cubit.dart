@@ -20,7 +20,7 @@ class ChessCubit extends Cubit<ChessState> {
   int get moveHistoryLength => _chessBoard.moveHistory.length;
 
   ChessCubit() : super(ChessInitial(board: ChessBoard())) {
-    initializeBoard(); // Initialize board on creation
+    initializeBoard();
   }
 
   void initializeBoard({Duration timeLimit = const Duration(minutes: 10)}) {
@@ -66,12 +66,6 @@ class ChessCubit extends Cubit<ChessState> {
         }
       }
 
-      // Emit time update (preserving other state if possible, or re-emitting current state class)
-      // Since State classes are distinct, we need to know WHICH state to emit.
-      // Easiest is to emit MoveMade/CheckState/GameInProgress with updated times.
-      // BUT, we don't want to re-trigger sounds or "last move" animations if unnecessary.
-      // ChessState holds everything.
-
       if (state is! GameEnded) {
         emit(_copyStateWithTime(state));
       } else {
@@ -97,7 +91,6 @@ class ChessCubit extends Cubit<ChessState> {
   }
 
   ChessState _copyStateWithTime(ChessState currentState) {
-    // Helper to clone state with new time
     if (currentState is CheckState) {
       return CheckState(
         colorInCheck: currentState.colorInCheck,
@@ -205,24 +198,14 @@ class ChessCubit extends Cubit<ChessState> {
 
       final legalMoves = CheckDetector.getLegalMoves(_chessBoard, piece, from);
       if (!legalMoves.contains(to)) {
-        // Move is illegal (puts king in check, or violates other rules)
-        // If it was a Pseudo-valid move (geometry ok) but Illegal (Check), we catch it here.
-        // We can just return or emit error. Emitting error provides feedback.
-        // Check if it was at least pseudo-valid to give specific error?
-        // For now, generic illegal move.
-        // Actually, if we just return, the UI might stay in selected state?
-        // Let's emit error to reset selection or notify user?
-        // Or just ignore? "Move not allowed". error message is good.
         emit(ChessError(
             message: "Illegal move: King would be in check",
             board: _chessBoard));
         return;
       }
 
-      // Check for capture BEFORE moving
       final isCapture = _chessBoard.getPiece(to) != null;
 
-      // Detect Promotion BEFORE moving on board
       if (piece is Pawn && (to.row == 1 || to.row == 8)) {
         emit(AwaitingPromotion(
           promotionFrom: from,
@@ -231,10 +214,10 @@ class ChessCubit extends Cubit<ChessState> {
           whiteTimeRemaining: whiteTime,
           blackTimeRemaining: blackTime,
         ));
-        return; // Stop here, wait for UI selection
+        return;
       }
 
-      _chessBoard.movePiece(from, to); // Make the move
+      _chessBoard.movePiece(from, to);
       _emitGameStateAfterMove(from, to, isCapture);
     } catch (e) {
       // Emit ChessError state in case of exceptions
@@ -400,7 +383,7 @@ class ChessCubit extends Cubit<ChessState> {
   }
 
   void resetGame() {
-    initializeBoard(); // Reinitialize board
+    initializeBoard();
   }
 
   @override

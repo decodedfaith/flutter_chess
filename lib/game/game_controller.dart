@@ -3,7 +3,6 @@ import 'package:flutter_chess/game/chess_piece.dart';
 import 'package:flutter_chess/game/position.dart';
 import 'package:flutter_chess/models/player_color.dart';
 
-
 class GameController {
   final ChessBoard chessBoard;
   PlayerColor currentPlayer = PlayerColor.white;
@@ -13,7 +12,9 @@ class GameController {
   GameController({required this.chessBoard});
 
   void switchPlayer() {
-    currentPlayer = currentPlayer == PlayerColor.white ? PlayerColor.black : PlayerColor.white;
+    currentPlayer = currentPlayer == PlayerColor.white
+        ? PlayerColor.black
+        : PlayerColor.white;
   }
 
   String makeMove(Position from, Position to) {
@@ -21,16 +22,22 @@ class GameController {
 
     ChessPiece? piece = chessBoard.getPiece(from);
     if (piece == null) return "No piece at the selected position.";
-    if (piece.color != currentPlayer) return "It's ${currentPlayer.name}'s turn.";
+    if (piece.color != currentPlayer) {
+      return "It's ${currentPlayer.name}'s turn.";
+    }
 
-    if (!piece.isValidMove(to, chessBoard)) return "Invalid move for ${piece.runtimeType}.";
+    if (!piece.isValidMove(to, chessBoard)) {
+      return "Invalid move for ${piece.runtimeType}.";
+    }
 
     chessBoard.movePiece(from, to);
 
     if (isKingInCheck(currentPlayer)) {
       if (isCheckmate(currentPlayer)) {
         isGameOver = true;
-        winner = currentPlayer == PlayerColor.white ? PlayerColor.black : PlayerColor.white;
+        winner = currentPlayer == PlayerColor.white
+            ? PlayerColor.black
+            : PlayerColor.white;
         return "Checkmate! ${winner?.name} wins!";
       }
       return "Check!";
@@ -45,7 +52,8 @@ class GameController {
 
   bool isKingInCheck(PlayerColor color) {
     Position? kingPosition = chessBoard.findKing(color);
-    return kingPosition != null && chessBoard.isUnderAttack(kingPosition, opponentColor(color));
+    return kingPosition != null &&
+        chessBoard.isUnderAttack(kingPosition, opponentColor(color));
   }
 
   bool isCheckmate(PlayerColor color) {

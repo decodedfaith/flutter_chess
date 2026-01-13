@@ -15,7 +15,7 @@ class _LandingPageState extends State<LandingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF262421), // Chess.com dark background
+      backgroundColor: const Color(0xFF262421),
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -30,7 +30,7 @@ class _LandingPageState extends State<LandingPage> {
                       height: 80,
                       width: 80,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF81B64C), // Chess.com green
+                        color: const Color(0xFF81B64C),
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(

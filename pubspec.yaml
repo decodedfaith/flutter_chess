@@ -13,7 +13,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_svg: ^2.0.15
   flutter_bloc: ^8.1.6
-  equatable: ^2.0.3 # For comparing states easily
+  equatable: ^2.0.3
   audioplayers: ^6.1.1
   google_fonts: ^6.2.1
   uuid: ^4.2.0
