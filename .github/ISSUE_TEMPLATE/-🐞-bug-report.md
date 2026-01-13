@@ -1,7 +1,7 @@
 ---
-name: Bug report
-about: Create a report to help us improve
-title: ''
+name: " \U0001F41E Bug Report"
+about: Report a bug or unexpected behavior in the Flutter Chess App
+title: '"[Bug]: "'
 labels: ''
 assignees: ''
 
