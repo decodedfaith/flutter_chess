@@ -17,6 +17,8 @@ class ChessCubit extends Cubit<ChessState> {
   Duration whiteTime = const Duration(minutes: 10);
   Duration blackTime = const Duration(minutes: 10);
 
+  int get moveHistoryLength => _chessBoard.moveHistory.length;
+
   ChessCubit() : super(ChessInitial(board: ChessBoard())) {
     initializeBoard(); // Initialize board on creation
   }
@@ -66,7 +68,7 @@ class ChessCubit extends Cubit<ChessState> {
       // BUT, we don't want to re-trigger sounds or "last move" animations if unnecessary.
       // ChessState holds everything.
 
-      if (state is! Checkmate && state is! Stalemate && state is! Resignation) {
+      if (state is! GameEnded) {
         emit(_copyStateWithTime(state));
       } else {
         timer.cancel();
@@ -77,10 +79,10 @@ class ChessCubit extends Cubit<ChessState> {
   void _handleTimeout(PlayerColor loser) {
     _timer?.cancel();
     AudioService().playGameOverSound();
-    emit(Checkmate(
-      // Reusing Checkmate for game over? Or create Timeout state? Checkmate implies winner.
+    emit(GameEnded(
       winner:
           loser == PlayerColor.white ? PlayerColor.black : PlayerColor.white,
+      reason: GameEndReason.timeout,
       moveCount: _chessBoard.moveCount,
       board: _chessBoard,
       lastMoveFrom: state.lastMoveFrom,
@@ -204,10 +206,11 @@ class ChessCubit extends Cubit<ChessState> {
     if (CheckDetector.isCheckmate(_chessBoard, _chessBoard.currentTurn)) {
       _timer?.cancel(); // Stop timer on valid end game
       AudioService().playGameOverSound();
-      emit(Checkmate(
+      emit(GameEnded(
         winner: _chessBoard.currentTurn == PlayerColor.white
             ? PlayerColor.black
             : PlayerColor.white,
+        reason: GameEndReason.checkmate,
         moveCount: _chessBoard.moveCount,
         board: _chessBoard,
         lastMoveFrom: from,
@@ -231,7 +234,8 @@ class ChessCubit extends Cubit<ChessState> {
         _chessBoard, _chessBoard.currentTurn)) {
       _timer?.cancel();
       AudioService().playGameOverSound();
-      emit(Stalemate(
+      emit(GameEnded(
+        reason: GameEndReason.stalemate,
         moveCount: _chessBoard.moveCount,
         board: _chessBoard,
         lastMoveFrom: from,
@@ -259,14 +263,58 @@ class ChessCubit extends Cubit<ChessState> {
 
   void resign() {
     _timer?.cancel();
-    // Current player resigns, opponent wins
-    emit(Resignation(
-      resignedPlayer: _chessBoard.currentTurn,
+    emit(GameEnded(
+      winner: _chessBoard.currentTurn == PlayerColor.white
+          ? PlayerColor.black
+          : PlayerColor.white,
+      reason: GameEndReason.resignation,
       moveCount: _chessBoard.moveCount,
       board: _chessBoard,
       whiteTimeRemaining: whiteTime,
       blackTimeRemaining: blackTime,
     ));
+  }
+
+  void startReviewMode() {
+    if (_chessBoard.moveHistory.isEmpty) return;
+    jumpToMove(_chessBoard.moveHistory.length - 1);
+  }
+
+  void jumpToMove(int index) {
+    if (index < -1 || index >= _chessBoard.moveHistory.length) return;
+
+    // To review, we create a fresh board and replay moves up to 'index'
+    final reviewBoard = ChessBoard();
+    reviewBoard.initializeBoard();
+
+    for (int i = 0; i <= index; i++) {
+      final move = _chessBoard.moveHistory[i];
+      reviewBoard.movePiece(move.from, move.to,
+          promotionPieceType: move.promotionType);
+    }
+
+    final lastMove = index >= 0 ? _chessBoard.moveHistory[index] : null;
+
+    emit(ReviewingGame(
+      currentMoveIndex: index,
+      board: reviewBoard,
+      lastMoveFrom: lastMove?.from,
+      lastMoveTo: lastMove?.to,
+      whiteTimeRemaining: whiteTime,
+      blackTimeRemaining: blackTime,
+    ));
+  }
+
+  void nextMove() {
+    if (state is ReviewingGame) {
+      jumpToMove((state as ReviewingGame).currentMoveIndex + 1);
+    }
+  }
+
+  void previousMove() {
+    if (state is ReviewingGame) {
+      jumpToMove((state as ReviewingGame).currentMoveIndex - 1);
+    }
   }
 
   void selectPiece(Position position) {

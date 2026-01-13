@@ -5,6 +5,7 @@ import 'package:flutter_chess/blocs/chess_state.dart';
 import 'package:flutter_chess/screens/chess_board_widget.dart';
 import 'package:flutter_chess/widgets/game_end_dialog.dart';
 import 'package:flutter_chess/widgets/promotion_dialog.dart';
+import 'package:flutter_chess/widgets/review_controls.dart';
 import 'package:flutter_svg/svg.dart';
 
 class ChessScreen extends StatelessWidget {
@@ -30,8 +31,8 @@ class ChessScreen extends StatelessWidget {
       ),
       body: BlocListener<ChessCubit, ChessState>(
         listener: (context, state) {
-          // Show endgame dialog on checkmate or stalemate
-          if (state is Checkmate || state is Stalemate) {
+          // Show endgame dialog on checkmate, stalemate, resignation, or timeout
+          if (state is GameEnded) {
             _showGameEndDialog(context, state);
           } else if (state is AwaitingPromotion) {
             _showPromotionDialog(context, state);
@@ -65,16 +66,16 @@ class ChessScreen extends StatelessWidget {
     );
   }
 
-  void _showGameEndDialog(BuildContext context, ChessState state) {
+  void _showGameEndDialog(BuildContext context, GameEnded state) {
     final cubit = context.read<ChessCubit>();
 
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => GameEndDialog(
-        winner: state is Checkmate ? state.winner : null,
-        reason: state is Checkmate ? 'checkmate' : 'stalemate',
-        moveCount: state.board.moveCount,
+        winner: state.winner,
+        reason: state.reason,
+        moveCount: state.moveCount,
         onNewGame: () {
           Navigator.of(dialogContext).pop();
           cubit.initializeBoard(timeLimit: timeLimit);
@@ -82,6 +83,10 @@ class ChessScreen extends StatelessWidget {
         onMainMenu: () {
           Navigator.of(dialogContext).pop();
           Navigator.of(context).pop();
+        },
+        onReview: () {
+          Navigator.of(dialogContext).pop();
+          cubit.startReviewMode();
         },
       ),
     );
@@ -113,13 +118,29 @@ class ChessScreen extends StatelessWidget {
   Widget _buildStateBody(BuildContext context, ChessState state) {
     // Always show the board, overlays handle Check/Checkmate alerts
     final chessCubit = BlocProvider.of<ChessCubit>(context);
-    return Center(
-      child: ChessBoardWidget(
-        chessBoard: state.board,
-        chessCubit: chessCubit,
-        whitePlayerName: whitePlayerName,
-        blackPlayerName: blackPlayerName,
-      ),
+    return Column(
+      children: [
+        Expanded(
+          child: Center(
+            child: ChessBoardWidget(
+              chessBoard: state.board,
+              chessCubit: chessCubit,
+              whitePlayerName: whitePlayerName,
+              blackPlayerName: blackPlayerName,
+            ),
+          ),
+        ),
+        if (state is ReviewingGame)
+          ReviewControls(
+            currentIndex: state.currentMoveIndex,
+            totalMoves: chessCubit.moveHistoryLength,
+            onFirst: () => chessCubit.jumpToMove(-1),
+            onLast: () =>
+                chessCubit.jumpToMove(chessCubit.moveHistoryLength - 1),
+            onNext: chessCubit.nextMove,
+            onPrevious: chessCubit.previousMove,
+          ),
+      ],
     );
   }
 }

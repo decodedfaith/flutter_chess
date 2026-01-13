@@ -8,6 +8,7 @@ import 'package:flutter_chess/game/pieces/rook.dart';
 import 'package:flutter_chess/game/position.dart';
 import 'package:flutter_chess/models/player_color.dart';
 import 'package:flutter_chess/models/captured_piece.dart';
+import 'package:flutter_chess/models/chess_move.dart';
 
 class ChessBoard {
   late Map<String, Map<int, ChessPiece?>> board;
@@ -23,6 +24,9 @@ class ChessBoard {
 
   // Game statistics
   int moveCount = 0;
+
+  // Move history for review and analysis
+  List<ChessMove> moveHistory = [];
 
   // En passant tracking
   Position? enPassantTarget;
@@ -205,6 +209,18 @@ class ChessBoard {
         currentTurn = currentTurn == PlayerColor.white
             ? PlayerColor.black
             : PlayerColor.white;
+
+        // Record Move in History
+        moveHistory.add(ChessMove(
+          from: from,
+          to: to,
+          pieceType: piece.type,
+          color: piece.color,
+          isCapture:
+              targetPiece != null || (piece is Pawn && to == enPassantTarget),
+          promotionType: promotionPieceType,
+          timestamp: DateTime.now(),
+        ));
 
         // Increment move counter
         moveCount++;
