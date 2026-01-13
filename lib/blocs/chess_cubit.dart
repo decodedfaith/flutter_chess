@@ -4,6 +4,7 @@ import 'package:flutter_chess/blocs/chess_state.dart';
 import 'package:flutter_chess/game/chess_board.dart';
 import 'package:flutter_chess/game/chess_piece.dart';
 import 'package:flutter_chess/game/position.dart';
+import 'package:flutter_chess/game/pieces/pawn.dart';
 import 'package:flutter_chess/models/player_color.dart';
 import 'package:flutter_chess/utils/audio_service.dart';
 import 'package:flutter_chess/utils/check_detector.dart';
@@ -154,82 +155,102 @@ class ChessCubit extends Cubit<ChessState> {
       // Check for capture BEFORE moving
       final isCapture = _chessBoard.getPiece(to) != null;
 
-      _chessBoard.movePiece(from, to); // Make the move
-
-      // Use CheckDetector for all rule validation to verify checkmate/check/stalemate correctly
-      // This ensures consistent logic especially for pawn attacks
-      if (CheckDetector.isCheckmate(_chessBoard, _chessBoard.currentTurn)) {
-        _timer?.cancel(); // Stop timer on valid end game
-        AudioService().playGameOverSound();
-        // Emit Checkmate state with winner
-        emit(Checkmate(
-          winner: _chessBoard.currentTurn == PlayerColor.white
-              ? PlayerColor.black
-              : PlayerColor.white,
-          moveCount: _chessBoard.moveCount,
+      // Detect Promotion BEFORE moving on board
+      if (piece is Pawn && (to.row == 1 || to.row == 8)) {
+        emit(AwaitingPromotion(
+          promotionFrom: from,
+          promotionTo: to,
           board: _chessBoard,
-          lastMoveFrom: from,
-          lastMoveTo: to,
           whiteTimeRemaining: whiteTime,
           blackTimeRemaining: blackTime,
         ));
-      } else if (CheckDetector.isKingInCheck(
-          _chessBoard, _chessBoard.currentTurn)) {
-        AudioService().playCheckSound();
-        _startTimer(); // Ensure timer is running
-        // Emit CheckState if king is in check
-        emit(CheckState(
-          colorInCheck: _chessBoard.currentTurn,
-          board: _chessBoard,
-          lastMoveFrom: from,
-          lastMoveTo: to,
-          whiteTimeRemaining: whiteTime,
-          blackTimeRemaining: blackTime,
-        ));
-      } else if (CheckDetector.isStalemate(
-          _chessBoard, _chessBoard.currentTurn)) {
-        _timer?.cancel(); // Stop timer
-        AudioService().playGameOverSound();
-        // Emit Stalemate state
-        emit(Stalemate(
-          moveCount: _chessBoard.moveCount,
-          board: _chessBoard,
-          lastMoveFrom: from,
-          lastMoveTo: to,
-          whiteTimeRemaining: whiteTime,
-          blackTimeRemaining: blackTime,
-        ));
-      } else {
-        // Normal Move or Capture
-        if (isCapture) {
-          AudioService().playCaptureSound();
-        } else {
-          AudioService().playMoveSound();
-        }
-
-        _startTimer(); // Ensure timer is running
-
-        // Emit MoveMade state
-        emit(MoveMade(
-          currentTurn: _chessBoard.currentTurn,
-          board: _chessBoard,
-          lastMoveFrom: from,
-          lastMoveTo: to,
-          whiteTimeRemaining: whiteTime,
-          blackTimeRemaining: blackTime,
-        ));
+        return; // Stop here, wait for UI selection
       }
+
+      _chessBoard.movePiece(from, to); // Make the move
+      _emitGameStateAfterMove(from, to, isCapture);
     } catch (e) {
       // Emit ChessError state in case of exceptions
       emit(ChessError(
         message: e.toString(),
         board: _chessBoard,
-        // Error state might want to preserve previous lastMove if available?
-        // But Cubit doesn't store it separately from State.
-        // Accessing state.lastMoveFrom isn't easy inside Cubit methods unless we check state.
-        // For now, null is acceptable or we can try access current state.
         lastMoveFrom: state.lastMoveFrom,
         lastMoveTo: state.lastMoveTo,
+        whiteTimeRemaining: whiteTime,
+        blackTimeRemaining: blackTime,
+      ));
+    }
+  }
+
+  void completePromotion(Position from, Position to, String type) {
+    try {
+      final isCapture = _chessBoard.getPiece(to) != null;
+      _chessBoard.movePiece(from, to, promotionPieceType: type);
+      _emitGameStateAfterMove(from, to, isCapture);
+    } catch (e) {
+      emit(ChessError(
+        message: e.toString(),
+        board: _chessBoard,
+        lastMoveFrom: state.lastMoveFrom,
+        lastMoveTo: state.lastMoveTo,
+        whiteTimeRemaining: whiteTime,
+        blackTimeRemaining: blackTime,
+      ));
+    }
+  }
+
+  void _emitGameStateAfterMove(Position from, Position to, bool isCapture) {
+    // Use CheckDetector for all rule validation to verify checkmate/check/stalemate correctly
+    if (CheckDetector.isCheckmate(_chessBoard, _chessBoard.currentTurn)) {
+      _timer?.cancel(); // Stop timer on valid end game
+      AudioService().playGameOverSound();
+      emit(Checkmate(
+        winner: _chessBoard.currentTurn == PlayerColor.white
+            ? PlayerColor.black
+            : PlayerColor.white,
+        moveCount: _chessBoard.moveCount,
+        board: _chessBoard,
+        lastMoveFrom: from,
+        lastMoveTo: to,
+        whiteTimeRemaining: whiteTime,
+        blackTimeRemaining: blackTime,
+      ));
+    } else if (CheckDetector.isKingInCheck(
+        _chessBoard, _chessBoard.currentTurn)) {
+      AudioService().playCheckSound();
+      _startTimer();
+      emit(CheckState(
+        colorInCheck: _chessBoard.currentTurn,
+        board: _chessBoard,
+        lastMoveFrom: from,
+        lastMoveTo: to,
+        whiteTimeRemaining: whiteTime,
+        blackTimeRemaining: blackTime,
+      ));
+    } else if (CheckDetector.isStalemate(
+        _chessBoard, _chessBoard.currentTurn)) {
+      _timer?.cancel();
+      AudioService().playGameOverSound();
+      emit(Stalemate(
+        moveCount: _chessBoard.moveCount,
+        board: _chessBoard,
+        lastMoveFrom: from,
+        lastMoveTo: to,
+        whiteTimeRemaining: whiteTime,
+        blackTimeRemaining: blackTime,
+      ));
+    } else {
+      if (isCapture) {
+        AudioService().playCaptureSound();
+      } else {
+        AudioService().playMoveSound();
+      }
+      _startTimer();
+      emit(MoveMade(
+        currentTurn: _chessBoard.currentTurn,
+        board: _chessBoard,
+        lastMoveFrom: from,
+        lastMoveTo: to,
         whiteTimeRemaining: whiteTime,
         blackTimeRemaining: blackTime,
       ));
