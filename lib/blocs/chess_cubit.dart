@@ -8,9 +8,15 @@ import 'package:flutter_chess/game/pieces/pawn.dart';
 import 'package:flutter_chess/models/player_color.dart';
 import 'package:flutter_chess/utils/audio_service.dart';
 import 'package:flutter_chess/utils/check_detector.dart';
+import 'package:flutter_chess/data/repositories/aegis_chess_repository.dart';
+import 'package:uuid/uuid.dart';
 
 class ChessCubit extends Cubit<ChessState> {
   final ChessBoard _chessBoard = ChessBoard();
+  final AegisChessRepository _aegisRepo = AegisChessRepository();
+  final String myId = const Uuid().v4();
+  String activeMatchId = "default_match";
+
   ChessPiece? selectedPiece;
   Position? selectedPosition;
   Timer? _timer;
@@ -21,6 +27,28 @@ class ChessCubit extends Cubit<ChessState> {
 
   ChessCubit() : super(ChessInitial(board: ChessBoard())) {
     initializeBoard();
+    _aegisRepo.init(myId);
+  }
+
+  void setupSync(String matchId) {
+    activeMatchId = matchId;
+    _aegisRepo.watchMoves(matchId).listen((move) {
+      if (move['playerId'] != myId) {
+        final from = Position.fromAlgebraic(move['from']);
+        final to = Position.fromAlgebraic(move['to']);
+        _handleRemoteMove(from, to, move['promotionType']);
+      }
+    });
+
+    _aegisRepo.watchOpponentThinking().listen((isThinking) {
+      emit(_copyWith(state, opponentIsThinking: isThinking));
+    });
+  }
+
+  void _handleRemoteMove(Position from, Position to, String? promotionType) {
+    final isCapture = _chessBoard.getPiece(to) != null;
+    _chessBoard.movePiece(from, to, promotionPieceType: promotionType);
+    _emitGameStateAfterMove(from, to, isCapture);
   }
 
   void initializeBoard({Duration timeLimit = const Duration(minutes: 10)}) {
@@ -91,6 +119,7 @@ class ChessCubit extends Cubit<ChessState> {
   }
 
   ChessState _copyStateWithTime(ChessState currentState) {
+    final opponentThinking = currentState.opponentIsThinking;
     if (currentState is CheckState) {
       return CheckState(
         colorInCheck: currentState.colorInCheck,
@@ -99,6 +128,7 @@ class ChessCubit extends Cubit<ChessState> {
         lastMoveTo: currentState.lastMoveTo,
         whiteTimeRemaining: whiteTime,
         blackTimeRemaining: blackTime,
+        opponentIsThinking: opponentThinking,
       );
     } else if (currentState is MoveMade) {
       return MoveMade(
@@ -108,13 +138,14 @@ class ChessCubit extends Cubit<ChessState> {
         lastMoveTo: currentState.lastMoveTo,
         whiteTimeRemaining: whiteTime,
         blackTimeRemaining: blackTime,
+        opponentIsThinking: opponentThinking,
       );
     } else if (currentState is ChessInitial) {
-      // Should we transition to GameInProgress? Valid match has started if timer is ticking.
       return GameInProgress(
         board: currentState.board,
         whiteTimeRemaining: whiteTime,
         blackTimeRemaining: blackTime,
+        opponentIsThinking: opponentThinking,
       );
     }
 
@@ -124,11 +155,14 @@ class ChessCubit extends Cubit<ChessState> {
       lastMoveTo: currentState.lastMoveTo,
       whiteTimeRemaining: whiteTime,
       blackTimeRemaining: blackTime,
+      opponentIsThinking: opponentThinking,
     );
   }
 
-  ChessState _copyWith(ChessState currentState, {bool? isFlipped}) {
+  ChessState _copyWith(ChessState currentState,
+      {bool? isFlipped, bool? opponentIsThinking}) {
     final flipped = isFlipped ?? currentState.isFlipped;
+    final thinking = opponentIsThinking ?? currentState.opponentIsThinking;
 
     if (currentState is GameEnded) {
       return GameEnded(
@@ -142,6 +176,7 @@ class ChessCubit extends Cubit<ChessState> {
         blackTimeRemaining: currentState.blackTimeRemaining,
         isReviewMode: currentState.isReviewMode,
         isFlipped: flipped,
+        opponentIsThinking: thinking,
       );
     } else if (currentState is ReviewingGame) {
       return ReviewingGame(
@@ -152,6 +187,7 @@ class ChessCubit extends Cubit<ChessState> {
         whiteTimeRemaining: currentState.whiteTimeRemaining,
         blackTimeRemaining: currentState.blackTimeRemaining,
         isFlipped: flipped,
+        opponentIsThinking: thinking,
       );
     } else if (currentState is CheckState) {
       return CheckState(
@@ -163,6 +199,7 @@ class ChessCubit extends Cubit<ChessState> {
         blackTimeRemaining: currentState.blackTimeRemaining,
         isReviewMode: currentState.isReviewMode,
         isFlipped: flipped,
+        opponentIsThinking: thinking,
       );
     } else if (currentState is MoveMade) {
       return MoveMade(
@@ -174,6 +211,7 @@ class ChessCubit extends Cubit<ChessState> {
         blackTimeRemaining: currentState.blackTimeRemaining,
         isReviewMode: currentState.isReviewMode,
         isFlipped: flipped,
+        opponentIsThinking: thinking,
       );
     }
 
@@ -185,12 +223,13 @@ class ChessCubit extends Cubit<ChessState> {
       blackTimeRemaining: blackTime,
       isReviewMode: currentState.isReviewMode,
       isFlipped: flipped,
+      opponentIsThinking: thinking,
     );
   }
 
   void makeMove(Position from, Position to) {
     try {
-      // Validate move legality (Check rules, Pins, etc.)
+      onUserInputFinished();
       final piece = _chessBoard.getPiece(from);
       if (piece == null) {
         throw Exception("No piece at source");
@@ -218,9 +257,16 @@ class ChessCubit extends Cubit<ChessState> {
       }
 
       _chessBoard.movePiece(from, to);
+
+      _aegisRepo.pushMove(activeMatchId, {
+        'from': from.toAlgebraic(),
+        'to': to.toAlgebraic(),
+        'playerId': myId,
+        'fen': _chessBoard.toFen(),
+      });
+
       _emitGameStateAfterMove(from, to, isCapture);
     } catch (e) {
-      // Emit ChessError state in case of exceptions
       emit(ChessError(
         message: e.toString(),
         board: _chessBoard,
@@ -236,6 +282,15 @@ class ChessCubit extends Cubit<ChessState> {
     try {
       final isCapture = _chessBoard.getPiece(to) != null;
       _chessBoard.movePiece(from, to, promotionPieceType: type);
+
+      _aegisRepo.pushMove(activeMatchId, {
+        'from': from.toAlgebraic(),
+        'to': to.toAlgebraic(),
+        'promotionType': type,
+        'playerId': myId,
+        'fen': _chessBoard.toFen(),
+      });
+
       _emitGameStateAfterMove(from, to, isCapture);
     } catch (e) {
       emit(ChessError(
@@ -250,9 +305,8 @@ class ChessCubit extends Cubit<ChessState> {
   }
 
   void _emitGameStateAfterMove(Position from, Position to, bool isCapture) {
-    // Use CheckDetector for all rule validation to verify checkmate/check/stalemate correctly
     if (CheckDetector.isCheckmate(_chessBoard, _chessBoard.currentTurn)) {
-      _timer?.cancel(); // Stop timer on valid end game
+      _timer?.cancel();
       AudioService().playGameOverSound();
       emit(GameEnded(
         winner: _chessBoard.currentTurn == PlayerColor.white
@@ -331,7 +385,6 @@ class ChessCubit extends Cubit<ChessState> {
   void jumpToMove(int index) {
     if (index < -1 || index >= _chessBoard.moveHistory.length) return;
 
-    // To review, we create a fresh board and replay moves up to 'index'
     final reviewBoard = ChessBoard();
     reviewBoard.initializeBoard();
 
@@ -366,20 +419,30 @@ class ChessCubit extends Cubit<ChessState> {
   }
 
   void selectPiece(Position position) {
-    // Logic to select the piece and highlight valid moves
+    onUserInputStarted();
     ChessPiece? piece = _chessBoard.getPiece(position);
     if (piece != null) {
       selectedPiece = piece;
       selectedPosition = position;
 
-      // Emit state with the updated board and piece selection
       emit(MoveMade(
         currentTurn: _chessBoard.currentTurn,
         board: _chessBoard,
         lastMoveFrom: state.lastMoveFrom,
         lastMoveTo: state.lastMoveTo,
+        whiteTimeRemaining: whiteTime,
+        blackTimeRemaining: blackTime,
+        opponentIsThinking: state.opponentIsThinking,
       ));
     }
+  }
+
+  void onUserInputStarted() {
+    _aegisRepo.setThinking(true);
+  }
+
+  void onUserInputFinished() {
+    _aegisRepo.setThinking(false);
   }
 
   void resetGame() {

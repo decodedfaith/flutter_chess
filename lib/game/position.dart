@@ -14,6 +14,8 @@ class Position {
   // Convert the position to the standard chess notation (e.g., 0, 0 -> 'a1')
   String get notation => '$col$row';
 
+  String toAlgebraic() => notation;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -27,9 +29,11 @@ class Position {
 
   // Factory method to create Position from standard chess notation (e.g., 'a1' -> Position(0, 0))
   factory Position.fromNotation(String notation) {
-    int col = notation.codeUnitAt(0) - 97; // Convert 'a' to 0, 'b' to 1, etc.
-    int row = 8 - int.parse(notation[1]); // Convert '1' to 7, '8' to 0, etc.
-    return Position(
-        row: row, col: String.fromCharCode('a'.codeUnitAt(0) + col));
+    String col = notation[0];
+    int row = int.parse(notation[1]);
+    return Position(row: row, col: col);
   }
+
+  factory Position.fromAlgebraic(String algebraic) =>
+      Position.fromNotation(algebraic);
 }

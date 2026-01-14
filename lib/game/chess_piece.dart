@@ -20,4 +20,6 @@ abstract class ChessPiece {
   bool isValidMove(Position toPosition, ChessBoard board);
 
   List<Position> getValidMoves(ChessBoard board);
+
+  String get fenChar;
 }
