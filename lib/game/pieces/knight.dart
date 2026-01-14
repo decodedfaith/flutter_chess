@@ -15,6 +15,9 @@ class Knight extends ChessPiece {
   }
 
   @override
+  String get fenChar => color == PlayerColor.white ? 'N' : 'n';
+
+  @override
   String getSvgAssetPath() {
     return 'assets/chess_pieces_svg/${color.name}-knight.svg';
   }

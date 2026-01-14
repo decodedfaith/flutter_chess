@@ -43,6 +43,34 @@ class ChessBoard {
     );
   }
 
+  String toFen() {
+    List<String> fenRows = [];
+    for (int row = 8; row >= 1; row--) {
+      String fenRow = "";
+      int emptyCount = 0;
+      for (String col in columnPositions) {
+        ChessPiece? piece = board[col]![row];
+        if (piece == null) {
+          emptyCount++;
+        } else {
+          if (emptyCount > 0) {
+            fenRow += emptyCount.toString();
+            emptyCount = 0;
+          }
+          fenRow += piece.fenChar;
+        }
+      }
+      if (emptyCount > 0) {
+        fenRow += emptyCount.toString();
+      }
+      fenRows.add(fenRow);
+    }
+
+    String turn = currentTurn == PlayerColor.white ? "w" : "b";
+    // Simplified FEN: just piece positions and turn
+    return "${fenRows.join("/")} $turn";
+  }
+
   void initializeBoard() {
     currentTurn = PlayerColor.white;
     capturedWhitePieces.clear();

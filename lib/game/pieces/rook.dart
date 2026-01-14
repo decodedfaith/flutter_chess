@@ -18,6 +18,9 @@ class Rook extends ChessPiece {
   }
 
   @override
+  String get fenChar => color == PlayerColor.white ? 'R' : 'r';
+
+  @override
   String getSvgAssetPath() {
     return 'assets/chess_pieces_svg/${color.name}-rook.svg';
   }

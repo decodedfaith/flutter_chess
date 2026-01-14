@@ -13,6 +13,9 @@ class Pawn extends ChessPiece {
   }
 
   @override
+  String get fenChar => color == PlayerColor.white ? 'P' : 'p';
+
+  @override
   String getSvgAssetPath() {
     return 'assets/chess_pieces_svg/${color.name}-pawn.svg';
   }

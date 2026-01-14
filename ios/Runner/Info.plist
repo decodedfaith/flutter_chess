@@ -43,6 +43,13 @@
 	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Flutter Chess needs local network access for decentralized multiplayer discovery.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_aegis._tcp</string>
+		<string>_aegis._udp</string>
+	</array>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 </dict>

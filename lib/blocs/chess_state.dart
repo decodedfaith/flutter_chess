@@ -10,6 +10,7 @@ abstract class ChessState {
   final Duration blackTimeRemaining;
   final bool isReviewMode;
   final bool isFlipped;
+  final bool opponentIsThinking;
 
   const ChessState({
     required this.board,
@@ -19,6 +20,7 @@ abstract class ChessState {
     this.blackTimeRemaining = const Duration(minutes: 10),
     this.isReviewMode = false,
     this.isFlipped = false,
+    this.opponentIsThinking = false,
   });
 }
 
@@ -27,6 +29,7 @@ class ChessInitial extends ChessState {
     required super.board,
     super.whiteTimeRemaining,
     super.blackTimeRemaining,
+    super.opponentIsThinking,
   });
 }
 
@@ -39,6 +42,7 @@ class GameInProgress extends ChessState {
     super.blackTimeRemaining,
     super.isReviewMode,
     super.isFlipped,
+    super.opponentIsThinking,
   });
 }
 
@@ -54,10 +58,10 @@ class MoveMade extends GameInProgress {
     super.blackTimeRemaining,
     super.isReviewMode,
     super.isFlipped,
+    super.opponentIsThinking,
   });
 }
 
-/// State when a king is in check
 class CheckState extends GameInProgress {
   final PlayerColor colorInCheck;
 
@@ -70,6 +74,7 @@ class CheckState extends GameInProgress {
     super.blackTimeRemaining,
     super.isReviewMode,
     super.isFlipped,
+    super.opponentIsThinking,
   });
 }
 
@@ -96,10 +101,10 @@ class GameEnded extends ChessState {
     super.blackTimeRemaining,
     super.isReviewMode,
     super.isFlipped,
+    super.opponentIsThinking,
   });
 }
 
-// Deprecated: Use GameEnded instead. Keeping for backward compatibility temporarily.
 class Checkmate extends GameEnded {
   const Checkmate({
     required super.winner,
@@ -110,6 +115,7 @@ class Checkmate extends GameEnded {
     super.whiteTimeRemaining,
     super.blackTimeRemaining,
     super.isFlipped,
+    super.opponentIsThinking,
   }) : super(reason: GameEndReason.checkmate);
 }
 
@@ -122,6 +128,7 @@ class Stalemate extends GameEnded {
     super.whiteTimeRemaining,
     super.blackTimeRemaining,
     super.isFlipped,
+    super.opponentIsThinking,
   }) : super(reason: GameEndReason.stalemate);
 }
 
@@ -136,6 +143,7 @@ class ChessError extends ChessState {
     super.whiteTimeRemaining,
     super.blackTimeRemaining,
     super.isFlipped,
+    super.opponentIsThinking,
   });
 }
 
@@ -150,6 +158,7 @@ class AwaitingPromotion extends GameInProgress {
     super.whiteTimeRemaining,
     super.blackTimeRemaining,
     super.isFlipped,
+    super.opponentIsThinking,
   });
 }
 
@@ -164,5 +173,6 @@ class ReviewingGame extends ChessState {
     super.whiteTimeRemaining,
     super.blackTimeRemaining,
     super.isFlipped,
+    super.opponentIsThinking,
   }) : super(isReviewMode: true);
 }

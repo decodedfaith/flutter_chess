@@ -15,6 +15,9 @@ class Bishop extends ChessPiece {
   }
 
   @override
+  String get fenChar => color == PlayerColor.white ? 'B' : 'b';
+
+  @override
   String getSvgAssetPath() {
     return 'assets/chess_pieces_svg/${color.name}-bishop.svg';
   }
