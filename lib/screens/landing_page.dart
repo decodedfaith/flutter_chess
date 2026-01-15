@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chess/blocs/chess_cubit.dart';
 import 'package:flutter_chess/screens/chess_screen.dart';
+import 'package:flutter_chess/ui/screens/aegis_lobby_screen.dart';
+import 'package:flutter_chess/data/repositories/i_chess_repository.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_chess/widgets/permission_guard.dart';
 
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
@@ -87,6 +90,20 @@ class _LandingPageState extends State<LandingPage> {
                     icon: Icons.smart_toy,
                     color: Color(0xFF454341),
                     isLocked: true,
+                  ),
+                  const SizedBox(height: 16),
+                  _MenuCard(
+                    title: 'P2P Multiplayer',
+                    subtitle: 'Discover nearby players (AegisCore)',
+                    icon: Icons.wifi_tethering,
+                    color: const Color(0xFF4A90E2),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const PermissionGuard(
+                          child: AegisChessLobby(),
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   const _MenuCard(
@@ -224,10 +241,14 @@ class _GameSetupSheetState extends State<_GameSetupSheet> {
 
   final List<String> times = [
     '1 min',
+    '1 | 1',
     '3 min',
+    '3 | 2',
     '5 min',
+    '5 | 5',
     '10 min',
-    '15 min',
+    '15 | 10',
+    '30 min',
     'None'
   ];
 
@@ -268,7 +289,7 @@ class _GameSetupSheetState extends State<_GameSetupSheet> {
                 ),
               ),
               const SizedBox(height: 32),
-              _label('TIME CONTROL'),
+              _label('TIME CONTROL (MIN | INC)'),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
@@ -362,41 +383,72 @@ class _GameSetupSheetState extends State<_GameSetupSheet> {
   }
 
   void _startGame(BuildContext context) {
-    final cubit = ChessCubit();
-    final timeLimit = _parseTime(selectedTime);
+    final repository = context.read<IChessRepository>();
+    final cubit = ChessCubit(repository);
+    final config = _parseTimeConfig(selectedTime);
+
+    final name1 = p1Controller.text.trim().isEmpty
+        ? 'Player 1'
+        : p1Controller.text.trim();
+    final name2 = p2Controller.text.trim().isEmpty
+        ? 'Player 2'
+        : p2Controller.text.trim();
 
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => BlocProvider.value(
-          value: cubit..initializeBoard(timeLimit: timeLimit),
+          value: cubit
+            ..initializeBoard(
+              timeLimit: config.time,
+              increment: config.increment,
+              whiteName: name1,
+              blackName: name2,
+            ),
           child: ChessScreen(
-            whitePlayerName: p1Controller.text.trim().isEmpty
-                ? 'Player 1'
-                : p1Controller.text.trim(),
-            blackPlayerName: p2Controller.text.trim().isEmpty
-                ? 'Player 2'
-                : p2Controller.text.trim(),
-            timeLimit: timeLimit,
+            whitePlayerName: name1,
+            blackPlayerName: name2,
+            timeLimit: config.time,
           ),
         ),
       ),
     );
   }
 
-  Duration _parseTime(String t) {
+  ({Duration time, Duration increment}) _parseTimeConfig(String t) {
     switch (t) {
       case '1 min':
-        return const Duration(minutes: 1);
+        return (time: const Duration(minutes: 1), increment: Duration.zero);
+      case '1 | 1':
+        return (
+          time: const Duration(minutes: 1),
+          increment: const Duration(seconds: 1)
+        );
       case '3 min':
-        return const Duration(minutes: 3);
+        return (time: const Duration(minutes: 3), increment: Duration.zero);
+      case '3 | 2':
+        return (
+          time: const Duration(minutes: 3),
+          increment: const Duration(seconds: 2)
+        );
       case '5 min':
-        return const Duration(minutes: 5);
+        return (time: const Duration(minutes: 5), increment: Duration.zero);
+      case '5 | 5':
+        return (
+          time: const Duration(minutes: 5),
+          increment: const Duration(seconds: 5)
+        );
       case '10 min':
-        return const Duration(minutes: 10);
-      case '15 min':
-        return const Duration(minutes: 15);
+        return (time: const Duration(minutes: 10), increment: Duration.zero);
+      case '15 | 10':
+        return (
+          time: const Duration(minutes: 15),
+          increment: const Duration(seconds: 10)
+        );
+      case '30 min':
+        return (time: const Duration(minutes: 30), increment: Duration.zero);
       default:
-        return const Duration(hours: 99);
+        // Unlimited / None
+        return (time: const Duration(hours: 99), increment: Duration.zero);
     }
   }
 }

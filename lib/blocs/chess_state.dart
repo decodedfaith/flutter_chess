@@ -83,6 +83,7 @@ enum GameEndReason {
   stalemate,
   resignation,
   timeout,
+  abandoned,
 }
 
 class GameEnded extends ChessState {

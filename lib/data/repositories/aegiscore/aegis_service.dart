@@ -172,7 +172,7 @@ class AegisService {
   AegisService._() {
     // Load the dynamic library
     if (Platform.isAndroid) {
-      _lib = ffi.DynamicLibrary.open('libaegicore_sdk.so');
+      _lib = ffi.DynamicLibrary.open('libaegis_sdk.so');
     } else if (Platform.isIOS) {
       _lib = ffi.DynamicLibrary.process();
     } else if (Platform.isMacOS) {

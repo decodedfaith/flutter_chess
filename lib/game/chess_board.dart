@@ -71,6 +71,60 @@ class ChessBoard {
     return "${fenRows.join("/")} $turn";
   }
 
+  void loadFen(String fen) {
+    final parts = fen.split(' ');
+    final positionPart = parts[0];
+    final turnPart = parts[1];
+
+    currentTurn = turnPart == 'w' ? PlayerColor.white : PlayerColor.black;
+
+    // Reset board
+    for (var col in columnPositions) {
+      for (var row in rowPositions) {
+        board[col]![row] = null;
+      }
+    }
+
+    final ranks = positionPart.split('/');
+    for (int i = 0; i < 8; i++) {
+      final rank = ranks[i];
+      int row = 8 - i;
+      int colIdx = 0;
+      for (int k = 0; k < rank.length; k++) {
+        final char = rank[k];
+        if (RegExp(r'\d').hasMatch(char)) {
+          colIdx += int.parse(char);
+        } else {
+          final col = indexToChessCol(colIdx);
+          board[col]![row] = _pieceFromFen(char, Position(col: col, row: row));
+          colIdx++;
+        }
+      }
+    }
+  }
+
+  ChessPiece _pieceFromFen(String char, Position pos) {
+    final color =
+        char == char.toUpperCase() ? PlayerColor.white : PlayerColor.black;
+    final type = char.toLowerCase();
+    switch (type) {
+      case 'p':
+        return Pawn(color, pos);
+      case 'r':
+        return Rook(color, pos);
+      case 'n':
+        return Knight(color, pos);
+      case 'b':
+        return Bishop(color, pos);
+      case 'q':
+        return Queen(color, pos);
+      case 'k':
+        return King(color, pos);
+      default:
+        throw Exception('Invalid FEN char: $char');
+    }
+  }
+
   void initializeBoard() {
     currentTurn = PlayerColor.white;
     capturedWhitePieces.clear();

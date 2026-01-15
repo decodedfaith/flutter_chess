@@ -8,9 +8,10 @@ import 'package:flutter_chess/widgets/promotion_dialog.dart';
 import 'package:flutter_chess/widgets/review_controls.dart';
 import 'package:flutter_svg/svg.dart';
 
-class ChessScreen extends StatelessWidget {
+class ChessScreen extends StatefulWidget {
   final String whitePlayerName;
   final String blackPlayerName;
+  final Duration timeLimit;
 
   const ChessScreen({
     super.key,
@@ -19,37 +20,119 @@ class ChessScreen extends StatelessWidget {
     this.timeLimit = const Duration(minutes: 10),
   });
 
-  final Duration timeLimit;
+  @override
+  State<ChessScreen> createState() => _ChessScreenState();
+}
+
+class _ChessScreenState extends State<ChessScreen> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      if (mounted) {
+        context.read<ChessCubit>().onResume();
+      }
+    } else if (state == AppLifecycleState.paused) {
+      if (mounted) {
+        context.read<ChessCubit>().onPause();
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.purple,
-        title: _buildAppBarTitle(),
-        centerTitle: true,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          _showResignConfirmation(context);
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF3D3A38), // Warm dark brown
+          foregroundColor: Colors.white,
+          elevation: 0,
+          title: _buildAppBarTitle(),
+          centerTitle: true,
+          automaticallyImplyLeading: false, // Remove default back button
+          leading: IconButton(
+            icon: const Icon(Icons.flag, color: Colors.redAccent),
+            onPressed: () => _showResignConfirmation(context),
+            tooltip: 'Resign',
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.flip_camera_android),
+              onPressed: () => context.read<ChessCubit>().toggleFlip(),
+              tooltip: 'Flip Board',
+            ),
+          ],
+        ),
+        body: BlocListener<ChessCubit, ChessState>(
+          listener: (context, state) {
+            // Show endgame dialog on checkmate, stalemate, resignation, or timeout
+            if (state is GameEnded) {
+              _showGameEndDialog(context, state);
+            } else if (state is AwaitingPromotion) {
+              _showPromotionDialog(context, state);
+            }
+          },
+          child: BlocBuilder<ChessCubit, ChessState>(
+            builder: (context, state) {
+              return _buildStateBody(context, state);
+            },
+          ),
+        ),
+      ), // Close Scaffold
+    );
+  }
+
+  void _showResignConfirmation(BuildContext context) {
+    final cubit = context.read<ChessCubit>();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF262421),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Resign Game?',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'Are you sure you want to resign? This will end the game.',
+          style: TextStyle(color: Colors.white70),
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.flip_camera_android),
-            onPressed: () => context.read<ChessCubit>().toggleFlip(),
-            tooltip: 'Flip Board',
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child:
+                const Text('Cancel', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              cubit.resign();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Resign'),
           ),
         ],
-      ),
-      body: BlocListener<ChessCubit, ChessState>(
-        listener: (context, state) {
-          // Show endgame dialog on checkmate, stalemate, resignation, or timeout
-          if (state is GameEnded) {
-            _showGameEndDialog(context, state);
-          } else if (state is AwaitingPromotion) {
-            _showPromotionDialog(context, state);
-          }
-        },
-        child: BlocBuilder<ChessCubit, ChessState>(
-          builder: (context, state) {
-            return _buildStateBody(context, state);
-          },
-        ),
       ),
     );
   }
@@ -85,7 +168,7 @@ class ChessScreen extends StatelessWidget {
         moveCount: state.moveCount,
         onNewGame: () {
           Navigator.of(dialogContext).pop();
-          cubit.initializeBoard(timeLimit: timeLimit);
+          cubit.initializeBoard(timeLimit: widget.timeLimit);
         },
         onMainMenu: () {
           Navigator.of(dialogContext).pop();
@@ -115,7 +198,7 @@ class ChessScreen extends StatelessWidget {
             fontWeight: FontWeight.bold,
             fontFamily: 'Roboto',
             letterSpacing: 1.5,
-            color: Colors.black87,
+            color: Colors.white,
           ),
         ),
       ],
@@ -132,8 +215,8 @@ class ChessScreen extends StatelessWidget {
             child: ChessBoardWidget(
               chessBoard: state.board,
               chessCubit: chessCubit,
-              whitePlayerName: whitePlayerName,
-              blackPlayerName: blackPlayerName,
+              whitePlayerName: widget.whitePlayerName,
+              blackPlayerName: widget.blackPlayerName,
             ),
           ),
         ),
