@@ -9,6 +9,7 @@ class GameHUD extends StatelessWidget {
   final bool isTurn;
   final List<CapturedPiece> capturedPieces;
   final Duration timeRemaining;
+  final bool isThinking;
 
   const GameHUD({
     super.key,
@@ -17,6 +18,7 @@ class GameHUD extends StatelessWidget {
     required this.isTurn,
     required this.capturedPieces,
     required this.timeRemaining,
+    this.isThinking = false,
   });
 
   String _formatDuration(Duration duration) {
@@ -30,89 +32,125 @@ class GameHUD extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isBlack = playerColor == PlayerColor.black;
     final color = isBlack ? Colors.black : Colors.white;
-    const textColor = Colors.white; // Always white text on dark background
+    const textColor = Colors.white;
 
-    // Glassmorphism background for HUD
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.2),
         border: Border.symmetric(
-          horizontal: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          horizontal: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
         ),
       ),
       child: Row(
         children: [
           _PlayerAvatar(color: color, isTurn: isTurn),
           const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                playerName,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-                style: const TextStyle(
-                  color: textColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(height: 4),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: isTurn
-                          ? Colors.green.withValues(alpha: 0.2)
-                          : Colors.grey.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
-                        color: isTurn
-                            ? Colors.green.withValues(alpha: 0.5)
-                            : Colors.transparent,
-                      ),
-                    ),
-                    child: Text(
-                      _formatDuration(timeRemaining),
-                      style: TextStyle(
-                        color: isTurn ? Colors.white : Colors.white70,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      playerName,
+                      style: const TextStyle(
+                        color: textColor,
                         fontWeight: FontWeight.bold,
-                        fontFamily: 'Courier', // Monospace for timer
+                        fontSize: 16,
+                        letterSpacing: 0.5,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Reserve space for "Thinking..." to prevent layout shift
-                  SizedBox(
-                    height: 14,
-                    child: Opacity(
-                      opacity: isTurn ? 1.0 : 0.0,
+                    const SizedBox(width: 8),
+                    if (isThinking) _ThinkingIndicator(),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isTurn
+                            ? const Color(0xFF81B64C).withValues(alpha: 0.2)
+                            : Colors.grey.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: isTurn
+                              ? const Color(0xFF81B64C).withValues(alpha: 0.5)
+                              : Colors.transparent,
+                        ),
+                      ),
                       child: Text(
-                        "Thinking...",
+                        _formatDuration(timeRemaining),
                         style: TextStyle(
-                          color: Colors.greenAccent[400],
-                          fontSize: 10,
-                          fontStyle: FontStyle.italic,
+                          color: isTurn ? Colors.white : Colors.white70,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Courier',
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
-          const Spacer(),
           CapturedPiecesDisplay(
             capturedPieces: capturedPieces,
             displayFor: playerColor,
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ThinkingIndicator extends StatefulWidget {
+  @override
+  State<_ThinkingIndicator> createState() => _ThinkingIndicatorState();
+}
+
+class _ThinkingIndicatorState extends State<_ThinkingIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1000))
+      ..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Row(
+          children: List.generate(3, (index) {
+            final opacity = ((_controller.value * 3 - index) % 3) / 3;
+            return Container(
+              width: 4,
+              height: 4,
+              margin: const EdgeInsets.symmetric(horizontal: 1),
+              decoration: BoxDecoration(
+                color: const Color(0xFF81B64C)
+                    .withValues(alpha: opacity.clamp(0.2, 1.0)),
+                shape: BoxShape.circle,
+              ),
+            );
+          }),
+        );
+      },
     );
   }
 }
@@ -126,21 +164,29 @@ class _PlayerAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 32,
-      height: 32,
+      width: 40,
+      height: 40,
       decoration: BoxDecoration(
         color: color,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.grey, width: 2),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isTurn ? const Color(0xFF81B64C) : Colors.grey.shade800,
+          width: 2,
+        ),
         boxShadow: isTurn
             ? [
                 BoxShadow(
-                  color: Colors.green.withValues(alpha: 0.8),
-                  blurRadius: 8,
+                  color: const Color(0xFF81B64C).withValues(alpha: 0.4),
+                  blurRadius: 10,
                   spreadRadius: 2,
                 )
               ]
             : [],
+      ),
+      child: Icon(
+        Icons.person,
+        color: color == Colors.black ? Colors.white38 : Colors.black45,
+        size: 24,
       ),
     );
   }

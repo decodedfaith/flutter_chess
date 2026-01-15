@@ -58,12 +58,10 @@ class CapturedPiecesDisplay extends StatelessWidget {
                 const SizedBox(width: 2),
                 Text(
                   '×$count',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: displayFor == PlayerColor.white
-                        ? Colors.black
-                        : Colors.white,
+                    color: Colors.white70,
                   ),
                 ),
               ],

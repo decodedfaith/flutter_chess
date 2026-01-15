@@ -41,6 +41,8 @@ class GameEndDialog extends StatelessWidget {
         return 'by Resignation';
       case GameEndReason.timeout:
         return 'on Time';
+      case GameEndReason.abandoned:
+        return 'Game Abandoned';
       default:
         return '';
     }

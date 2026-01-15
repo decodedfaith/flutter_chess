@@ -43,12 +43,8 @@ class ChessBoardWidget extends StatelessWidget {
             return Container(
               width: double.infinity,
               height: double.infinity,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.grey[900]!, Colors.grey[800]!],
-                ),
+              decoration: const BoxDecoration(
+                color: Color(0xFF262421), // Consistent dark brown background
               ),
               child: SafeArea(
                 child: Column(
@@ -70,6 +66,8 @@ class ChessBoardWidget extends StatelessWidget {
                       timeRemaining: state.isFlipped
                           ? state.whiteTimeRemaining
                           : state.blackTimeRemaining,
+                      isThinking: state
+                          .opponentIsThinking, // Pass thinking state to opponent
                     ),
 
                     const Spacer(),
@@ -110,6 +108,8 @@ class ChessBoardWidget extends StatelessWidget {
                       timeRemaining: state.isFlipped
                           ? state.blackTimeRemaining
                           : state.whiteTimeRemaining,
+                      isThinking:
+                          false, // My own thinking status isn't shown in my own HUD
                     ),
                   ],
                 ),
