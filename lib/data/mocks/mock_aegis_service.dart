@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_chess/data/repositories/aegiscore/models/peer.dart';
 
 /// A mock version of AegisService to simulate the engine behavior
 /// for development and testing without the native C++ engine.
@@ -7,10 +8,10 @@ class MockAegisService {
   static final MockAegisService instance = MockAegisService._internal();
   MockAegisService._internal();
 
-  final _peerDiscoveredController = StreamController<MockPeer>.broadcast();
+  final _peerDiscoveredController = StreamController<Peer>.broadcast();
   final _typingController = StreamController<MockTypingEvent>.broadcast();
 
-  Stream<MockPeer> get onPeerDiscovered => _peerDiscoveredController.stream;
+  Stream<Peer> get onPeerDiscovered => _peerDiscoveredController.stream;
   Stream<MockTypingEvent> get onPeerTyping => _typingController.stream;
 
   Future<void> init(
@@ -26,7 +27,7 @@ class MockAegisService {
     debugPrint("MOCK: Starting network discovery...");
     // Simulate finding a peer after 3 seconds
     Timer(const Duration(seconds: 3), () {
-      _peerDiscoveredController.add(MockPeer(
+      _peerDiscoveredController.add(Peer(
         id: "mock-peer-123",
         userName: "Guest Opponent",
         ip: "192.168.1.50",
@@ -61,13 +62,6 @@ class MockAegisService {
       'mesh_nodes': 1,
     };
   }
-}
-
-class MockPeer {
-  final String id;
-  final String userName;
-  final String ip;
-  MockPeer({required this.id, required this.userName, required this.ip});
 }
 
 class MockTypingEvent {

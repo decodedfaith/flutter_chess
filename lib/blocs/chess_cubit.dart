@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chess/blocs/chess_state.dart';
 import 'package:flutter_chess/game/chess_board.dart';
@@ -8,12 +9,12 @@ import 'package:flutter_chess/game/pieces/pawn.dart';
 import 'package:flutter_chess/models/player_color.dart';
 import 'package:flutter_chess/utils/audio_service.dart';
 import 'package:flutter_chess/utils/check_detector.dart';
-import 'package:flutter_chess/data/repositories/aegis_chess_repository.dart';
+import 'package:flutter_chess/data/repositories/i_chess_repository.dart';
 import 'package:uuid/uuid.dart';
 
 class ChessCubit extends Cubit<ChessState> {
   final ChessBoard _chessBoard = ChessBoard();
-  final AegisChessRepository _aegisRepo = AegisChessRepository();
+  final IChessRepository _aegisRepo;
   final String myId = const Uuid().v4();
   String activeMatchId = "default_match";
 
@@ -22,12 +23,101 @@ class ChessCubit extends Cubit<ChessState> {
   Timer? _timer;
   Duration whiteTime = const Duration(minutes: 10);
   Duration blackTime = const Duration(minutes: 10);
+  Duration _timeIncrement = Duration.zero; // Increment per move
+  Timer? _abandonTimer;
+  static const Duration _abandonTimeout = Duration(seconds: 30);
+  bool _firstMoveMade = false;
 
   int get moveHistoryLength => _chessBoard.moveHistory.length;
 
-  ChessCubit() : super(ChessInitial(board: ChessBoard())) {
-    initializeBoard();
+  ChessCubit(this._aegisRepo) : super(ChessInitial(board: ChessBoard())) {
     _aegisRepo.init(myId);
+    // Note: We don't initializeBoard() here anymore to avoid overwriting restorations
+    // The UI should call initializeBoard() or restoreSession()
+  }
+
+  Future<void> _persist() async {
+    final history = _chessBoard.moveHistory
+        .map((m) => {
+              'from': m.from.toAlgebraic(),
+              'to': m.to.toAlgebraic(),
+              'promotionType': m.promotionType,
+            })
+        .toList();
+
+    await _aegisRepo.saveLocalState('active_game', {
+      'matchId': activeMatchId,
+      'fen': _chessBoard.toFen(),
+      'history': history,
+      'whiteTimeMs': whiteTime.inMilliseconds,
+      'blackTimeMs': blackTime.inMilliseconds,
+      'turn': _chessBoard.currentTurn.name, // Persist who's turn it is
+      'whitePlayerName': whitePlayerName,
+      'blackPlayerName': blackPlayerName,
+      'lastMoveFrom': state.lastMoveFrom?.toAlgebraic(),
+      'lastMoveTo': state.lastMoveTo?.toAlgebraic(),
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+    });
+  }
+
+  String whitePlayerName = "White";
+  String blackPlayerName = "Black";
+
+  Future<bool> restoreSession() async {
+    final data = await _aegisRepo.getLocalState('active_game');
+    if (data == null) return false;
+
+    try {
+      final fen = data['fen'] as String;
+      activeMatchId = data['matchId'] as String;
+      whiteTime = Duration(milliseconds: data['whiteTimeMs'] as int);
+      blackTime = Duration(milliseconds: data['blackTimeMs'] as int);
+      whitePlayerName = data['whitePlayerName'] as String? ?? "White";
+      blackPlayerName = data['blackPlayerName'] as String? ?? "Black";
+
+      // Time Catch-up Logic:
+      // Subtract the time that passed while the app was "dead"
+      final savedAt =
+          DateTime.fromMillisecondsSinceEpoch(data['timestamp'] as int);
+      final drift = DateTime.now().difference(savedAt);
+      final currentTurnStr = data['turn'] as String? ?? 'white';
+
+      if (currentTurnStr == 'white') {
+        whiteTime -= drift;
+        if (whiteTime < Duration.zero) whiteTime = Duration.zero;
+      } else {
+        blackTime -= drift;
+        if (blackTime < Duration.zero) blackTime = Duration.zero;
+      }
+
+      _chessBoard.loadFen(fen);
+
+      _chessBoard.moveHistory.clear();
+      // In a real app we'd map back to Move objects, but loadFen handles the board state.
+
+      _firstMoveMade = _chessBoard.moveHistory.isNotEmpty;
+
+      final lastFrom = data['lastMoveFrom'] != null
+          ? Position.fromAlgebraic(data['lastMoveFrom'])
+          : null;
+      final lastTo = data['lastMoveTo'] != null
+          ? Position.fromAlgebraic(data['lastMoveTo'])
+          : null;
+
+      emit(GameInProgress(
+        board: _chessBoard,
+        lastMoveFrom: lastFrom,
+        lastMoveTo: lastTo,
+        whiteTimeRemaining: whiteTime,
+        blackTimeRemaining: blackTime,
+      ));
+
+      _startTimer();
+      return true;
+    } catch (e) {
+      debugPrint('[ChessCubit] Restoration failed: $e');
+      return false;
+    }
   }
 
   void setupSync(String matchId) {
@@ -51,11 +141,21 @@ class ChessCubit extends Cubit<ChessState> {
     _emitGameStateAfterMove(from, to, isCapture);
   }
 
-  void initializeBoard({Duration timeLimit = const Duration(minutes: 10)}) {
+  void initializeBoard({
+    Duration timeLimit = const Duration(minutes: 10),
+    Duration increment = Duration.zero,
+    String whiteName = "White",
+    String blackName = "Black",
+  }) {
     _chessBoard.initializeBoard();
     whiteTime = timeLimit;
     blackTime = timeLimit;
+    _timeIncrement = increment;
+    whitePlayerName = whiteName;
+    blackPlayerName = blackName;
+    _firstMoveMade = false;
     _timer?.cancel();
+    _abandonTimer?.cancel();
 
     emit(ChessInitial(
       board: _chessBoard,
@@ -72,6 +172,7 @@ class ChessCubit extends Cubit<ChessState> {
         blackTimeRemaining: blackTime,
       ));
       _startTimer(); // Start the clock immediately
+      _startAbandonTimer(); // Start abandon timer
     });
   }
 
@@ -79,31 +180,65 @@ class ChessCubit extends Cubit<ChessState> {
     emit(_copyWith(state, isFlipped: !state.isFlipped));
   }
 
+  DateTime? _turnStartTime;
+  Duration? _whiteTimeAtTurnStart;
+  Duration? _blackTimeAtTurnStart;
+
   void _startTimer() {
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_chessBoard.currentTurn == PlayerColor.white) {
-        whiteTime -= const Duration(seconds: 1);
-        if (whiteTime.inSeconds <= 0) {
-          _handleTimeout(PlayerColor.white);
-        }
-      } else {
-        blackTime -= const Duration(seconds: 1);
-        if (blackTime.inSeconds <= 0) {
-          _handleTimeout(PlayerColor.black);
-        }
-      }
+    _turnStartTime = DateTime.now();
+    _whiteTimeAtTurnStart = whiteTime;
+    _blackTimeAtTurnStart = blackTime;
 
-      if (state is! GameEnded) {
-        emit(_copyStateWithTime(state));
-      } else {
-        timer.cancel();
-      }
+    _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      _updateTime();
     });
+  }
+
+  void _updateTime() {
+    if (_turnStartTime == null || state is GameEnded) {
+      _timer?.cancel();
+      return;
+    }
+
+    final now = DateTime.now();
+    final elapsed = now.difference(_turnStartTime!);
+
+    if (_chessBoard.currentTurn == PlayerColor.white) {
+      whiteTime = _whiteTimeAtTurnStart! - elapsed;
+      if (whiteTime.inMilliseconds <= 0) {
+        whiteTime = Duration.zero;
+        _handleTimeout(PlayerColor.white);
+      }
+    } else {
+      blackTime = _blackTimeAtTurnStart! - elapsed;
+      if (blackTime.inMilliseconds <= 0) {
+        blackTime = Duration.zero;
+        _handleTimeout(PlayerColor.black);
+      }
+    }
+
+    if (state is! GameEnded) {
+      // Only emit distinct seconds to avoid flooding the UI/Bloc stream
+      // unless it's low time (< 10 sec) where we want smooth updates
+      emit(_copyStateWithTime(state));
+      // Periodic persist of time for crash recovery
+      if (whiteTime.inSeconds % 5 == 0) _persist();
+    }
+  }
+
+  // Called when user returns to app to force an immediate time sync
+  void onResume() {
+    _updateTime();
+  }
+
+  void onPause() {
+    _persist();
   }
 
   void _handleTimeout(PlayerColor loser) {
     _timer?.cancel();
+    _abandonTimer?.cancel();
     AudioService().playGameOverSound();
     emit(GameEnded(
       winner:
@@ -113,6 +248,30 @@ class ChessCubit extends Cubit<ChessState> {
       board: _chessBoard,
       lastMoveFrom: state.lastMoveFrom,
       lastMoveTo: state.lastMoveTo,
+      whiteTimeRemaining: whiteTime,
+      blackTimeRemaining: blackTime,
+    ));
+  }
+
+  void _startAbandonTimer() {
+    _abandonTimer?.cancel();
+    _abandonTimer = Timer(_abandonTimeout, () {
+      if (!_firstMoveMade) {
+        _handleAbandonTimeout();
+      }
+    });
+  }
+
+  void _handleAbandonTimeout() {
+    _timer?.cancel();
+    AudioService().playGameOverSound();
+    // No winner in abandoned game, or technically the one who didn't move loses?
+    // Usually abandoned means aborted. Let's say no winner/aborted.
+    emit(GameEnded(
+      winner: null,
+      reason: GameEndReason.abandoned,
+      moveCount: 0,
+      board: _chessBoard,
       whiteTimeRemaining: whiteTime,
       blackTimeRemaining: blackTime,
     ));
@@ -305,8 +464,23 @@ class ChessCubit extends Cubit<ChessState> {
   }
 
   void _emitGameStateAfterMove(Position from, Position to, bool isCapture) {
+    if (!_firstMoveMade) {
+      _firstMoveMade = true;
+      _abandonTimer?.cancel();
+    }
+
+    // Apply time increment
+    if (_chessBoard.currentTurn == PlayerColor.black) {
+      // White just moved
+      whiteTime += _timeIncrement;
+    } else {
+      // Black just moved
+      blackTime += _timeIncrement;
+    }
+
     if (CheckDetector.isCheckmate(_chessBoard, _chessBoard.currentTurn)) {
       _timer?.cancel();
+      _abandonTimer?.cancel();
       AudioService().playGameOverSound();
       emit(GameEnded(
         winner: _chessBoard.currentTurn == PlayerColor.white
@@ -335,6 +509,7 @@ class ChessCubit extends Cubit<ChessState> {
     } else if (CheckDetector.isStalemate(
         _chessBoard, _chessBoard.currentTurn)) {
       _timer?.cancel();
+      _abandonTimer?.cancel();
       AudioService().playGameOverSound();
       emit(GameEnded(
         reason: GameEndReason.stalemate,
@@ -360,6 +535,7 @@ class ChessCubit extends Cubit<ChessState> {
         whiteTimeRemaining: whiteTime,
         blackTimeRemaining: blackTime,
       ));
+      _persist();
     }
   }
 
