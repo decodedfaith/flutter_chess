@@ -137,3 +137,5 @@ This project is licensed under the **MIT License**.
 - Chess piece SVGs from [Wikimedia Commons](https://commons.wikimedia.org/)
 - Inspired by [Chess.com](https://chess.com) and [Lichess.org](https://lichess.org)
 - Built with ❤️ using [Flutter](https://flutter.dev)
+
+_Documentation last updated: 2026-01-16_
